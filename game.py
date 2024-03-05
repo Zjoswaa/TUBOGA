@@ -1,8 +1,10 @@
 import pygame as pg
 import random
 
+from player import Player
 
-class Game(object):
+
+class Game:
     def __init__(self, width, height, title):
         # PyGame initialization
         pg.init()
@@ -40,8 +42,8 @@ class Game(object):
 
         self.pause_icon = pg.image.load("res/icon.png").convert_alpha()
 
-        self.p1_pos = 0  # The tile the player is on, 0 is Start, 35 is max
-        self.p2_pos = 0
+        self.p1 = Player(1)
+        self.p2 = Player(2)
 
         self.d1_roll = 0
         self.d2_roll = 0
@@ -204,10 +206,10 @@ class Game(object):
                         print(f"{self.d1_roll} {self.d2_roll}")
                         break
                     elif event.key == pg.K_1:
-                        self.p1_pos = (self.p1_pos + 1) % 36
+                        self.p1.position = (self.p1.position + 1) % 36
                         break
                     elif event.key == pg.K_2:
-                        self.p2_pos = (self.p2_pos + 1) % 36
+                        self.p2.position = (self.p2.position + 1) % 36
                         break
 
             # Update
@@ -240,16 +242,16 @@ class Game(object):
                 self.screen.blit(legend_text[i], legend_text[i].get_rect(topleft=(600, (i * 50) + 175)))
 
             # Render the players
-            if self.p1_pos == self.p2_pos:  # if both players are on the same tile
-                pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1_pos][0] + 15, self.coords[self.p1_pos][1] + 15), 10)
-                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1_pos][0] + 15, self.coords[self.p1_pos][1] + 15), 10, 2)
-                pg.draw.circle(self.screen, self.p2_color,(self.coords[self.p2_pos][0] + 35, self.coords[self.p2_pos][1] + 35), 10)
-                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2_pos][0] + 35, self.coords[self.p2_pos][1] + 35), 10, 2)
+            if self.p1.position == self.p2.position:  # if both players are on the same tile
+                pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1.position][0] + 15, self.coords[self.p1.position][1] + 15), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1.position][0] + 15, self.coords[self.p1.position][1] + 15), 10, 2)
+                pg.draw.circle(self.screen, self.p2_color, (self.coords[self.p2.position][0] + 35, self.coords[self.p2.position][1] + 35), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2.position][0] + 35, self.coords[self.p2.position][1] + 35), 10, 2)
             else:
-                pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1_pos][0] + 25, self.coords[self.p1_pos][1] + 25), 10)
-                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1_pos][0] + 25, self.coords[self.p1_pos][1] + 25), 10, 2)
-                pg.draw.circle(self.screen, self.p2_color,(self.coords[self.p2_pos][0] + 25, self.coords[self.p2_pos][1] + 25), 10)
-                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2_pos][0] + 25, self.coords[self.p2_pos][1] + 25), 10, 2)
+                pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1.position][0] + 25, self.coords[self.p1.position][1] + 25), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1.position][0] + 25, self.coords[self.p1.position][1] + 25), 10, 2)
+                pg.draw.circle(self.screen, self.p2_color,(self.coords[self.p2.position][0] + 25, self.coords[self.p2.position][1] + 25), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2.position][0] + 25, self.coords[self.p2.position][1] + 25), 10, 2)
 
             pg.display.update()
             self.clock.tick(self.fps)
