@@ -46,7 +46,6 @@ class Game(object):
         self.d1_roll = 0
         self.d2_roll = 0
 
-
     # Shows the start menu
     def start(self):
         hint_clock = 0
@@ -204,6 +203,12 @@ class Game(object):
                         self.dice_roll()
                         print(f"{self.d1_roll} {self.d2_roll}")
                         break
+                    elif event.key == pg.K_1:
+                        self.p1_pos = (self.p1_pos + 1) % 36
+                        break
+                    elif event.key == pg.K_2:
+                        self.p2_pos = (self.p2_pos + 1) % 36
+                        break
 
             # Update
 
@@ -235,10 +240,16 @@ class Game(object):
                 self.screen.blit(legend_text[i], legend_text[i].get_rect(topleft=(600, (i * 50) + 175)))
 
             # Render the players
-            pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1_pos][0] + 15, self.coords[self.p1_pos][1] + 15), 10)
-            pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1_pos][0] + 15, self.coords[self.p1_pos][1] + 15), 10, 2)
-            pg.draw.circle(self.screen, self.p2_color,(self.coords[self.p2_pos][0] + 35, self.coords[self.p2_pos][1] + 35), 10)
-            pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2_pos][0] + 35, self.coords[self.p2_pos][1] + 35), 10, 2)
+            if self.p1_pos == self.p2_pos:  # if both players are on the same tile
+                pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1_pos][0] + 15, self.coords[self.p1_pos][1] + 15), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1_pos][0] + 15, self.coords[self.p1_pos][1] + 15), 10, 2)
+                pg.draw.circle(self.screen, self.p2_color,(self.coords[self.p2_pos][0] + 35, self.coords[self.p2_pos][1] + 35), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2_pos][0] + 35, self.coords[self.p2_pos][1] + 35), 10, 2)
+            else:
+                pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1_pos][0] + 25, self.coords[self.p1_pos][1] + 25), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1_pos][0] + 25, self.coords[self.p1_pos][1] + 25), 10, 2)
+                pg.draw.circle(self.screen, self.p2_color,(self.coords[self.p2_pos][0] + 25, self.coords[self.p2_pos][1] + 25), 10)
+                pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2_pos][0] + 25, self.coords[self.p2_pos][1] + 25), 10, 2)
 
             pg.display.update()
             self.clock.tick(self.fps)
