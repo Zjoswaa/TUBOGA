@@ -53,7 +53,7 @@ class Game(object):
         hint_black = True
         hint_color = (0, 0, 0)
         play_button = pg.Rect((80, 500), (200, 100))
-        play_text = self.font_100.render("Play", False, self.color_blue).convert()
+        play_text = self.font_100.render("Play", False, self.color_brown).convert()
         quit_button = pg.Rect((1000, 500), (200, 100))
         quit_text = self.font_100.render("Quit", False, self.color_purple).convert()
         hint_text = [self.font_50.render("Press any key to play", False, hint_color).convert(),
@@ -94,9 +94,9 @@ class Game(object):
             # Play button and text
             pg.draw.rect(self.screen, self.color_green, play_button)
             if play_button.collidepoint(pg.mouse.get_pos()):
-                play_text = self.font_100.render("Play", False, self.color_brown).convert()
-            else:
                 play_text = self.font_100.render("Play", False, self.color_blue).convert()
+            else:
+                play_text = self.font_100.render("Play", False, self.color_brown).convert()
             self.screen.blit(play_text, play_text.get_rect(center=(play_button.centerx + 5, play_button.centery + 5)))
             # Quit button and text
             pg.draw.rect(self.screen, self.color_red, quit_button)
@@ -124,7 +124,7 @@ class Game(object):
     def pause(self):
         paused_text = self.font_100.render("Paused", False, self.text_color).convert()
         return_button = pg.Rect((80, 500), (250, 100))
-        return_text = self.font_100.render("Return", False, self.color_blue).convert()
+        return_text = self.font_100.render("Return", False, self.color_brown).convert()
         quit_button = pg.Rect((1000, 500), (200, 100))
         quit_text = self.font_100.render("Quit", False, self.color_purple).convert()
 
@@ -157,9 +157,9 @@ class Game(object):
             # Return button
             pg.draw.rect(self.screen, self.color_green, return_button)
             if return_button.collidepoint(pg.mouse.get_pos()):
-                return_text = self.font_100.render("Return", False, self.color_brown).convert()
-            else:
                 return_text = self.font_100.render("Return", False, self.color_blue).convert()
+            else:
+                return_text = self.font_100.render("Return", False, self.color_brown).convert()
             self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
             # Quit button
             pg.draw.rect(self.screen, self.color_red, quit_button)
