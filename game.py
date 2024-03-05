@@ -17,6 +17,11 @@ class Game:
         self.window_height = height
         self.state_stack = []
 
+        self.font_200 = pg.font.Font("res/fonts/pixeltype.ttf", 200)
+        self.font_100 = pg.font.Font("res/fonts/pixeltype.ttf", 100)
+        self.font_50 = pg.font.Font("res/fonts/pixeltype.ttf", 50)
+        self.font_24 = pg.font.Font("res/fonts/pixeltype.ttf", 25)
+
         self.bg_color = (150, 150, 170)
         self.text_color = (0, 0, 0)
         self.color_red = (255, 0, 0)
@@ -29,24 +34,29 @@ class Game:
         self.p1_color = (250, 117, 24)
         self.p2_color = (252, 15, 192)
         self.coords = [(500, 560), (450, 560), (400, 560), (350, 560), (300, 560), (250, 560), (200, 560), (150, 560), (100, 560), (50, 560), (50, 510),  # Bottom
-                  (50, 460), (50, 410), (50, 360), (50, 310), (50, 260), (50, 210), (50, 160), (50, 110),  # Left
-                  (100, 110), (150, 110), (200, 110), (250, 110), (300, 110), (350, 110), (400, 110), (450, 110), (500, 110),  # Top
-                  (500, 160), (500, 210), (500, 260), (500, 310), (500, 360), (500, 410), (500, 460), (500, 510)]  # Right
+                       (50, 460), (50, 410), (50, 360), (50, 310), (50, 260), (50, 210), (50, 160), (50, 110),  # Left
+                       (100, 110), (150, 110), (200, 110), (250, 110), (300, 110), (350, 110), (400, 110), (450, 110), (500, 110),  # Top
+                       (500, 160), (500, 210), (500, 260), (500, 310), (500, 360), (500, 410), (500, 460), (500, 510)]  # Right
+
+        # This keeps track of the most recent events
+        self.log = []
+        self.max_log_size = 5
 
         self.clock = pg.time.Clock()
         self.fps = 60
 
-        self.font_100 = pg.font.Font("res/fonts/pixeltype.ttf", 100)
-        self.font_50 = pg.font.Font("res/fonts/pixeltype.ttf", 50)
-        self.font_24 = pg.font.Font("res/fonts/pixeltype.ttf", 25)
+        self.d1_text = self.font_200.render("0", False, "Black").convert()
+        self.d2_text = self.font_200.render("0", False, "Black").convert()
 
         self.pause_icon = pg.image.load("res/icon.png").convert_alpha()
 
-        self.p1 = Player(1)
-        self.p2 = Player(2)
+        self.p1 = Player()
+        self.p2 = Player()
 
-        self.d1_roll = 0
-        self.d2_roll = 0
+        self.dice_rolls = [0, 0]
+
+        self.round_stages = ["P1_ANNOUNCE_ROLL", "P1_WAIT_FOR_ROLL", "P1_MOVE", "P1_ACTION", "P2_ANNOUNCE_ROLL", "P2_WAIT_FOR_ROLL", "P2_MOVE", "P2_ACTION"]
+        self.current_round_stage = 0
 
     # Shows the start menu
     def start(self):
@@ -202,8 +212,14 @@ class Game:
                         self.state_stack.append("PAUSE")
                         self.pause()
                     elif event.key == pg.K_SPACE:
-                        self.dice_roll()
-                        print(f"{self.d1_roll} {self.d2_roll}")
+                        if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL":
+                            self.dice_roll()
+                            self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}")
+                            self.next_round_stage()
+                        elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL":
+                            self.dice_roll()
+                            self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}")
+                            self.next_round_stage()
                         break
                     elif event.key == pg.K_1:
                         self.p1.position = (self.p1.position + 1) % 36
@@ -250,12 +266,54 @@ class Game:
             else:
                 pg.draw.circle(self.screen, self.p1_color, (self.coords[self.p1.position][0] + 25, self.coords[self.p1.position][1] + 25), 10)
                 pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p1.position][0] + 25, self.coords[self.p1.position][1] + 25), 10, 2)
-                pg.draw.circle(self.screen, self.p2_color,(self.coords[self.p2.position][0] + 25, self.coords[self.p2.position][1] + 25), 10)
+                pg.draw.circle(self.screen, self.p2_color, (self.coords[self.p2.position][0] + 25, self.coords[self.p2.position][1] + 25), 10)
                 pg.draw.circle(self.screen, (70, 70, 70), (self.coords[self.p2.position][0] + 25, self.coords[self.p2.position][1] + 25), 10, 2)
+
+            # Render the dice numbers
+            self.screen.blit(self.d1_text, self.d1_text.get_rect(midleft=(188, 380)))
+            self.screen.blit(self.d2_text, self.d2_text.get_rect(midleft=(350, 380)))
+
+            # Render the message log
+            for i in range(len(self.log)):
+                self.screen.blit(self.log[i], self.log[i].get_rect(topleft=(800, (i * 50) + 20)))
+
+            if self.round_stages[self.current_round_stage] == "P1_ANNOUNCE_ROLL":
+                self.add_to_log("P1, press space to roll dice")
+                self.next_round_stage()
+            elif self.round_stages[self.current_round_stage] == "P1_MOVE":
+                self.p1.position = (self.p1.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
+                self.next_round_stage()
+            elif self.round_stages[self.current_round_stage] == "P1_ACTION":
+                self.add_to_log(f"P1 is on tile: {self.p1.position}")
+                self.next_round_stage()
+            elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
+                self.add_to_log("P2, press space to roll dice")
+                self.next_round_stage()
+            elif self.round_stages[self.current_round_stage] == "P2_MOVE":
+                self.p2.position = (self.p2.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
+                self.next_round_stage()
+            elif self.round_stages[self.current_round_stage] == "P2_ACTION":
+                self.add_to_log(f"P2 is on tile: {self.p2.position}")
+                self.next_round_stage()
+            else:
+                print(self.round_stages[self.current_round_stage])
 
             pg.display.update()
             self.clock.tick(self.fps)
 
     def dice_roll(self):
-        self.d1_roll = random.randint(1, 6)
-        self.d2_roll = random.randint(1, 6)
+        # Roll 2 random numbers
+        self.dice_rolls[0] = random.randint(1, 6)
+        self.dice_rolls[1] = random.randint(1, 6)
+
+        # Update the display
+        self.d1_text = self.font_200.render(str(self.dice_rolls[0]), False, "Black").convert()
+        self.d2_text = self.font_200.render(str(self.dice_rolls[1]), False, "Black").convert()
+
+    def add_to_log(self, message):
+        if len(self.log) > self.max_log_size:
+            del self.log[0]
+        self.log.append(self.font_50.render(message, False, "Black").convert())
+
+    def next_round_stage(self):
+        self.current_round_stage = (self.current_round_stage + 1) % len(self.round_stages)
