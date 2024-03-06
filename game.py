@@ -7,6 +7,7 @@ from questions import *
 
 class Game:
     def __init__(self, width, height, title):
+        self.rig_dices = False
         # PyGame initialization
         pg.init()
         self.screen = pg.display.set_mode((width, height))
@@ -64,6 +65,8 @@ class Game:
 
         self.round_stages = ["P1_ANNOUNCE_ROLL", "P1_WAIT_FOR_ROLL", "P1_MOVE", "P1_ACTION", "P2_ANNOUNCE_ROLL", "P2_WAIT_FOR_ROLL", "P2_MOVE", "P2_ACTION"]
         self.current_round_stage = 0
+
+        self.chances = [(400, 600), (250, 350), (200, 300), (75, 125), (20, 60), (-1, 1), (-75, -25), (-100, -50), (-350, -300), (-450, -250)]
 
     # Shows the start menu
     def start(self):
@@ -320,12 +323,15 @@ class Game:
                 #self.add_to_log(f"P1 is on tile: {self.p1.position}", self.p1_color)
                 if self.p1.position == 18:  # if p1 landed on jail tile
                     self.p1.jailed = True
-                    self.add_to_log("P2 landed on jail", (0, 0, 0))
+                    self.add_to_log("P1 landed on jail", (0, 0, 0))
                 elif self.p1.position == 16 or self.p1.position == 34:  # random item tile
                     item = random.choice(list(self.p1.components.keys()))
                     self.add_to_log(f"P1 got: {item}", self.color_brown)
                     self.p1.components[item] += 1
-                    print(self.p1.components)
+                    print(f"P1: {self.p1.components}")
+                elif self.p1.position == 11 or self.p1.position == 29:  # chance tile
+                    self.chance(1)
+                    print(f"P1 money: {self.p1.money}")
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
                 if self.p2.jailed:
@@ -348,7 +354,10 @@ class Game:
                     item = random.choice(list(self.p2.components.keys()))
                     self.add_to_log(f"P2 got: {item}", self.color_brown)
                     self.p2.components[item] += 1
-                    print(self.p2.components)
+                    print(f"P2: {self.p2.components}")
+                elif self.p2.position == 11 or self.p2.position == 29:  # chance tile
+                    self.chance(2)
+                    print(f"P2 money: {self.p2.money}")
                 self.next_round_stage()
 
             pg.display.update()
@@ -356,8 +365,12 @@ class Game:
 
     def dice_roll(self):
         # Roll 2 random numbers
-        self.dice_rolls[0] = random.randint(1, 6)
-        self.dice_rolls[1] = random.randint(1, 6)
+        if not self.rig_dices:
+            self.dice_rolls[0] = random.randint(1, 6)
+            self.dice_rolls[1] = random.randint(1, 6)
+        else:
+            self.dice_rolls[0] = 1
+            self.dice_rolls[1] = 1
 
         # Update the display
         self.d1_text = self.font_200.render(str(self.dice_rolls[0]), False, "Black").convert()
@@ -370,3 +383,86 @@ class Game:
 
     def next_round_stage(self):
         self.current_round_stage = (self.current_round_stage + 1) % len(self.round_stages)
+
+    def chance(self, player):
+        if not self.rig_dices:
+            item = random.randrange(0, len(self.chances))
+        else:
+            item = 7
+        print(f"Rolled: {item}")
+        gain = random.randint(self.chances[item][0], self.chances[item][1])
+        relatives = ["mom", "dad", "grandma", "grandpa"]
+        food = ["lunch", "breakfast", "dinner"]
+        if player == 1:
+            if item == 0:
+                self.add_to_log(f"P1 won the lottery, +{gain}", self.color_purple)
+            elif item == 1:
+                self.add_to_log(f"P1 hit the jackpot, +{gain}", self.color_purple)
+            elif item == 2:
+                self.add_to_log(f"P1 found a chest, +{gain}", self.color_purple)
+            elif item == 3:
+                self.add_to_log(f"P1 got some money from {random.choice(relatives)}, +{gain}", self.color_purple)
+            elif item == 4:
+                self.add_to_log(f"P1 found some money on the floor, +{gain}", self.color_purple)
+            elif item == 5:
+                self.add_to_log(f"Nothing seems to happen", self.color_purple)
+            elif item == 6:
+                self.add_to_log(f"P1 is hungry, {random.choice(food)} costs {gain}", self.color_purple)
+            elif item == 7:
+                if self.p1.money == 0:
+                    self.add_to_log(f"P1 can't pay the ticket, to jail!", self.color_purple)
+                    self.p1.jailed = True
+                    self.p1.position = 18
+                else:
+                    if abs(gain) > self.p1.money:
+                        gain = -1 * self.p1.money
+                    self.add_to_log(f"P1 got a ticket, -{abs(gain)}", self.color_purple)
+            elif item == 8:
+                self.add_to_log(f"P1 went all in, -{abs(gain)}", self.color_purple)
+            elif item == 9:
+                self.add_to_log(f"P1's {random.choice(relatives)}, is in the hospital, -{abs(gain)}", self.color_purple)
+        else:
+            if item == 0:
+                self.add_to_log(f"P2 won the lottery, +{gain}", self.color_purple)
+            elif item == 1:
+                self.add_to_log(f"P2 hit the jackpot, +{gain}", self.color_purple)
+            elif item == 2:
+                self.add_to_log(f"P2 found a chest, +{gain}", self.color_purple)
+            elif item == 3:
+                self.add_to_log(f"P2 got some money from {random.choice(relatives)}, +{gain}", self.color_purple)
+            elif item == 4:
+                self.add_to_log(f"P2 found some money on the floor, +{gain}", self.color_purple)
+            elif item == 5:
+                self.add_to_log(f"Nothing seems to happen", self.color_purple)
+            elif item == 6:
+                if self.p2.money == 0:
+                    self.add_to_log(f"P2 is starving", self.color_purple)
+                else:
+                    self.add_to_log(f"P2 is hungry, {random.choice(food)} costs {gain}", self.color_purple)
+            elif item == 7:
+                if self.p2.money == 0:
+                    self.add_to_log(f"P2 can't pay the ticket, to jail!", self.color_purple)
+                    self.p2.jailed = True
+                    self.p2.position = 18
+                else:
+                    if abs(gain) > self.p2.money:
+                        gain = -1 * self.p2.money
+                    self.add_to_log(f"P2 got a ticket, -{abs(gain)}", self.color_purple)
+            elif item == 8:
+                self.add_to_log(f"P2 went all in, -{abs(gain)}", self.color_purple)
+            elif item == 9:
+                self.add_to_log(f"P2's {random.choice(relatives)}, is in the hospital, -{abs(gain)}", self.color_purple)
+        if player == 1:
+            if item != 5:
+                if self.p1.money + gain < 0:
+                    self.p1.money = 0
+                else:
+                    self.p1.money += gain
+                self.p1_money_text = self.font_40.render(str(self.p1.money), False, self.p1_color).convert()
+        else:
+            if item != 5:
+                if self.p2.money + gain < 0:
+                    self.p2.money = 0
+                else:
+                    self.p2.money += gain
+                self.p2_money_text = self.font_40.render(str(self.p2.money), False, self.p2_color).convert()

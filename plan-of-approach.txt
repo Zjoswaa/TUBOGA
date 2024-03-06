@@ -79,6 +79,7 @@
         v Zorg ervoor dat je de dobbelstenen in pygame kan zien
     v Jail vakje
     v Random item vakje
+    v Chance vakje
     x Money
         # Een geld systeem maken
         v Geef startgeld
