@@ -7,7 +7,7 @@ from questions import *
 
 class Game:
     def __init__(self, width, height, title):
-        self.rig_dices = True
+        self.rig_dices = False
         # PyGame initialization
         pg.init()
         self.screen = pg.display.set_mode((width, height))
@@ -43,7 +43,7 @@ class Game:
 
         # This keeps track of the most recent events
         self.log = []
-        self.max_log_size = 5
+        self.max_log_size = 8
 
         self.clock = pg.time.Clock()
         self.fps = 60
@@ -56,9 +56,9 @@ class Game:
         self.p1 = Player()
         self.p2 = Player()
 
-        self.p1_money_text = self.font_40.render(str(self.p1.money), False, self.p1_color).convert()
-        self.p2_money_text = self.font_40.render(str(self.p2.money), False, self.p2_color).convert()
-        
+        self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+        self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+
         self.dice_rolls = [0, 0]
 
         self.min_break_free_roll = 6  # minimum number you need to roll to break out of jail.
@@ -67,6 +67,8 @@ class Game:
         self.current_round_stage = 0
 
         self.chances = [(400, 600), (250, 350), (200, 300), (75, 125), (20, 60), (-1, 1), (-75, -25), (-100, -50), (-350, -300), (-450, -250)]
+
+        self.resell_percentage = 0.8
 
     # Shows the start menu
     def start(self):
@@ -254,12 +256,12 @@ class Game:
                         self.p2.position = (self.p2.position + 1) % 36
                         break
                     elif event.key == pg.K_b:
-                        #if self.p1.position == 9 or self.p1.position == 27:
-                        self.state_stack.append("SHOP")
-                        self.shop()
-                        #elif self.p2.position == 9 or self.p2.position == 27:
-                            #self.state_stack.append("SHOP")
-                            #self.shop()
+                        if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position == 9 or self.p1.position == 27:
+                            self.state_stack.append("SHOP")
+                            self.shop(1)
+                        elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position == 9 or self.p2.position == 27:
+                            self.state_stack.append("SHOP")
+                            self.shop(2)
 
             # Update
 
@@ -309,7 +311,7 @@ class Game:
             # Render the player inventories
             self.screen.blit(self.p1_money_text, (10, 10))
             self.screen.blit(self.p2_money_text, (10, 40))
-            
+
             # Render the message log
             for i in range(len(self.log)):
                 self.screen.blit(self.log[i], self.log[i].get_rect(topleft=(800, (i * 50) + 20)))
@@ -318,7 +320,10 @@ class Game:
                 if self.p1.jailed:
                     self.add_to_log("P1 is jailed, press space to break out", self.p1_color)
                 else:
-                    self.add_to_log("P1, press space to roll dice", self.p1_color)
+                    if self.p1.position == 9 or self.p1.position == 27:
+                        self.add_to_log("P1, press space to roll dice, B to shop", self.p1_color)
+                    else:
+                        self.add_to_log("P1, press space to roll dice", self.p1_color)
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P1_MOVE":
                 if not self.p1.jailed:
@@ -327,7 +332,7 @@ class Game:
                     self.p1.jailed = False
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P1_ACTION":
-                #self.add_to_log(f"P1 is on tile: {self.p1.position}", self.p1_color)
+                # self.add_to_log(f"P1 is on tile: {self.p1.position}", self.p1_color)
                 if self.p1.position == 18:  # if p1 landed on jail tile
                     self.p1.jailed = True
                     self.add_to_log("P1 landed on jail", (0, 0, 0))
@@ -335,30 +340,31 @@ class Game:
                     item = random.choice(list(self.p1.components.keys()))
                     self.add_to_log(f"P1 got: {item}", self.color_brown)
                     self.p1.components[item] += 1
-                    print(f"P1: {self.p1.components}")   
+                    print(f"P1: {self.p1.components}")
                 elif self.p1.position == 11 or self.p1.position == 29:  # chance tile
                     self.chance(1)
-                    print(f"P1 money: {self.p1.money}")
-                    
-                #Nieuw gedeelte -Ryan (verwijder deze comment wanneer gelezen :) )    
-                elif self.p1.position == 2 or self.p1.position == 20: # Event tile
+
+                # Nieuw gedeelte -Ryan (verwijder deze comment wanneer gelezen :) )
+                elif self.p1.position == 2 or self.p1.position == 20:  # Event tile
                     self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_green)
-                elif self.p1.position == 7 or self.p1.position == 25: # Famous person tile
+                elif self.p1.position == 7 or self.p1.position == 25:  # Famous person tile
                     self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_gray)
-                elif self.p1.position == 5 or self.p1.position == 14 or self.p1.position == 23 or self.p1.position == 32: # Query tile
+                elif self.p1.position == 5 or self.p1.position == 14 or self.p1.position == 23 or self.p1.position == 32:  # Query tile
                     self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_blue)
-                elif self.p1.position == 9 or self.p1.position == 27: # Shop tile
+                elif self.p1.position == 9 or self.p1.position == 27:  # Shop tile
                     self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_red)
-                elif self.p1.position == 0: # Start tile
-                    print(f"Dit is de Start tile! Welkom op het begin!") # had ik gebruikt om te checken voor elk speciaal vakje!
+                elif self.p1.position == 0:  # Start tile
                     self.add_to_log(f"P1 is back at Start!", self.color_yellow)
-                    
+
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
                 if self.p2.jailed:
                     self.add_to_log("P2 is jailed, press space to break out", self.p2_color)
                 else:
-                    self.add_to_log("P2, press space to roll dice", self.p2_color)
+                    if self.p2.position == 9 or self.p2.position == 27:
+                        self.add_to_log("P2, press space to roll dice, B to shop", self.p2_color)
+                    else:
+                        self.add_to_log("P2, press space to roll dice", self.p2_color)
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_MOVE":
                 if not self.p2.jailed:
@@ -367,7 +373,7 @@ class Game:
                     self.p2.jailed = False
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ACTION":
-                #self.add_to_log(f"P2 is on tile: {self.p2.position}", self.p2_color)
+                # self.add_to_log(f"P2 is on tile: {self.p2.position}", self.p2_color)
                 if self.p2.position == 18:  # if p2 landed on jail tile
                     self.p2.jailed = True
                     self.add_to_log("P2 landed on jail", (0, 0, 0))
@@ -378,20 +384,19 @@ class Game:
                     print(f"P2: {self.p2.components}")
                 elif self.p2.position == 11 or self.p2.position == 29:  # chance tile
                     self.chance(2)
-                    print(f"P2 money: {self.p2.money}")
-                    
-                #Nieuw gedeelte -Ryan (verwijder deze comment wanneer gelezen :) )    
-                elif self.p2.position == 2 or self.p2.position == 20: # Event tile
+
+                # Nieuw gedeelte -Ryan (verwijder deze comment wanneer gelezen :) )
+                elif self.p2.position == 2 or self.p2.position == 20:  # Event tile
                     self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_green)
-                elif self.p2.position == 7 or self.p2.position == 25: # Famous person tile
+                elif self.p2.position == 7 or self.p2.position == 25:  # Famous person tile
                     self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_gray)
-                elif self.p2.position == 5 or self.p2.position == 14 or self.p2.position == 23 or self.p2.position == 32: # Query tile
+                elif self.p2.position == 5 or self.p2.position == 14 or self.p2.position == 23 or self.p2.position == 32:  # Query tile
                     self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_blue)
-                elif self.p2.position == 9 or self.p2.position == 27: # Shop tile
+                elif self.p2.position == 9 or self.p2.position == 27:  # Shop tile
                     self.add_to_log(f"P2 is on tile: {self.p1.position}", self.color_red)
-                elif self.p2.position == 0: # Start tile
+                elif self.p2.position == 0:  # Start tile
                     self.add_to_log(f"P2 is back at Start!", self.color_yellow)
-                    
+
                 self.next_round_stage()
 
             pg.display.update()
@@ -411,7 +416,7 @@ class Game:
         self.d2_text = self.font_200.render(str(self.dice_rolls[1]), False, "Black").convert()
 
     def add_to_log(self, message, color=(0, 0, 0)):
-        if len(self.log) > self.max_log_size:
+        if len(self.log) >= self.max_log_size:
             del self.log[0]
         self.log.append(self.font_40.render(message, False, color).convert())
 
@@ -423,10 +428,9 @@ class Game:
             item = random.randrange(0, len(self.chances))
         else:
             item = 8
-        print(f"Rolled: {item}")
         gain = random.randint(self.chances[item][0], self.chances[item][1])
         relatives = ["mom's", "dad's", "grandma's", "grandpa's"]
-        #injury = ["broken leg", "broken arm", "broken foot", "broken hand"]
+        # injury = ["broken leg", "broken arm", "broken foot", "broken hand"]
         food = ["lunch", "breakfast", "dinner"]
         if player == 1:
             if item == 0:
@@ -445,7 +449,7 @@ class Game:
                 if self.p1.money == 0:
                     self.add_to_log(f"P1 is starving, but has no money", self.color_purple)
                 # Kan ook nog (aan joshua laten zien) of met een bepaald hoeveelheid geld maar betalen zodat money = 0 wordt.
-                #elif self.p1.money < abs(gain):
+                # elif self.p1.money < abs(gain):
                 #    self.add_to_log(f"P1 has not enough money for food", self.color_purple)
                 #    gain = 0
                 else:
@@ -461,7 +465,7 @@ class Game:
                     self.add_to_log(f"P1 got a ticket, -{abs(gain)}", self.color_purple)
             elif item == 8:
                 if self.p1.money == 0:
-                    self.add_to_log(f"P1 went all in with nothing", self.color_purple)  
+                    self.add_to_log(f"P1 went all in with nothing", self.color_purple)
                 else:
                     self.add_to_log(f"P1 went all in, -{abs(gain)}", self.color_purple)
             elif item == 9:
@@ -482,7 +486,7 @@ class Game:
                 self.add_to_log(f"P2 found some money on the floor, +{gain}", self.color_purple)
             elif item == 5:
                 self.add_to_log(f"Nothing seems to happen", self.color_purple)
-            elif item == 6:   
+            elif item == 6:
                 if self.p2.money == 0:
                     self.add_to_log(f"P2 is starving, but has no money", self.color_purple)
                 else:
@@ -495,10 +499,10 @@ class Game:
                 else:
                     if abs(gain) > self.p2.money:
                         gain = -1 * self.p2.money
-                    self.add_to_log(f"P2 got a ticket, -{abs(gain)}", self.color_purple)      
+                    self.add_to_log(f"P2 got a ticket, -{abs(gain)}", self.color_purple)
             elif item == 8:
                 if self.p2.money == 0:
-                    self.add_to_log(f"P2 went all in with nothing", self.color_purple)  
+                    self.add_to_log(f"P2 went all in with nothing", self.color_purple)
                 else:
                     self.add_to_log(f"P2 went all in, -{abs(gain)}", self.color_purple)
             elif item == 9:
@@ -512,55 +516,47 @@ class Game:
                     self.p1.money = 0
                 else:
                     self.p1.money += gain
-                self.p1_money_text = self.font_40.render(str(self.p1.money), False, self.p1_color).convert()
+                self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
         else:
             if item != 5:
                 if self.p2.money + gain < 0:
                     self.p2.money = 0
                 else:
                     self.p2.money += gain
-                self.p2_money_text = self.font_40.render(str(self.p2.money), False, self.p2_color).convert()
+                self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
 
-################
-        ###############
-        ##################
-        #########################
-        ############################
-
-    def shop(self):
+    def shop(self, player):
         shop_text = self.font_100.render("Shop", False, self.text_color).convert()
-        return_button = pg.Rect((1000, 50), (250, 100))
+        return_button = pg.Rect((1000, 590), (250, 100))
         return_text = self.font_100.render("Return", False, self.color_brown).convert()
-        
-        buy_button = pg.Rect((260, 140), (100, 50))
-        buy_button2 = pg.Rect((260, 210), (100, 50))
-        buy_button3 = pg.Rect((260, 280), (100, 50))
-        buy_button4 = pg.Rect((260, 350), (100, 50))
-        buy_button5 = pg.Rect((260, 420), (100, 50))
-        buy_button6 = pg.Rect((260, 490), (100, 50))
-        buy_button7 = pg.Rect((260, 560), (100, 50))
-        buy_button8 = pg.Rect((260, 630), (100, 50))
 
-        sell_button = pg.Rect((400, 140), (100, 50))
-        sell_button2 = pg.Rect((400, 210), (100, 50))
-        sell_button3 = pg.Rect((400, 280), (100, 50))
-        sell_button4 = pg.Rect((400, 350), (100, 50))
-        sell_button5 = pg.Rect((400, 420), (100, 50))
-        sell_button6 = pg.Rect((400, 490), (100, 50))
-        sell_button7 = pg.Rect((400, 560), (100, 50))
-        sell_button8 = pg.Rect((400, 630), (100, 50))
+        buy_buttons = [pg.Rect((420, 140), (100, 50)), pg.Rect((420, 210), (100, 50)), pg.Rect((420, 280), (100, 50)), pg.Rect((420, 350), (100, 50)), pg.Rect((420, 420), (100, 50)), pg.Rect((420, 490), (100, 50)),
+                       pg.Rect((420, 560), (100, 50)), pg.Rect((420, 630), (100, 50))]
+        sell_buttons = [pg.Rect((550, 140), (100, 50)), pg.Rect((550, 210), (100, 50)), pg.Rect((550, 280), (100, 50)), pg.Rect((550, 350), (100, 50)), pg.Rect((550, 420), (100, 50)), pg.Rect((550, 490), (100, 50)),
+                        pg.Rect((550, 560), (100, 50)), pg.Rect((550, 630), (100, 50))]
+        items = {"Keyboard": 100, "Mouse": 100, "Monitor": 100, "Printer": 100, "CPU": 100, "GPU": 100, "Motherboard": 100, "Mini Tower": 100}
+        keys = list(items.keys())
+        values = list(items.values())
 
-        # Informatie over items
-        items = [
-            {"name": "Keyboard"},
-            {"name": "Mouse"},
-            {"name": "Monitor"},
-            {"name": "Printer"},
-            {"name": "CPU"},
-            {"name": "GPU"},
-            {"name": "Motherboard"},
-            {"name": "Mini Tower"},
-        ]
+        def buy_item(index):
+            if player == 1 and self.p1.money >= values[index]:
+                self.p1.money -= values[index]
+                self.p1.components[keys[index]] += 1
+                self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+            elif player == 2 and self.p2.money > values[index]:
+                self.p2.money -= values[index]
+                self.p2.components[keys[index]] += 1
+                self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+
+        def sell_item(index):
+            if player == 1 and self.p1.components[keys[index]] > 0:
+                self.p1.money += int(values[index] * self.resell_percentage)
+                self.p1.components[keys[index]] -= 1
+                self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+            elif player == 2 and self.p2.components[keys[index]] > 0:
+                self.p2.money += int(values[index] * self.resell_percentage)
+                self.p2.components[keys[index]] -= 1
+                self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
 
         while self.state_stack[-1] == "SHOP":
             for event in pg.event.get():
@@ -572,6 +568,38 @@ class Game:
                         # Go back to previous state
                         self.state_stack.pop()
                         break
+                    elif buy_buttons[0].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 1
+                        buy_item(0)
+                    elif sell_buttons[0].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 1
+                        sell_item(0)
+                    elif buy_buttons[1].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 2
+                        buy_item(1)
+                    elif sell_buttons[1].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 2
+                        sell_item(1)
+                    elif buy_buttons[2].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 3
+                        buy_item(2)
+                    elif sell_buttons[2].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 3
+                        sell_item(2)
+                    elif buy_buttons[3].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 4
+                        buy_item(3)
+                    elif sell_buttons[3].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 4
+                        sell_item(3)
+                    elif buy_buttons[4].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 5
+                        buy_item(4)
+                    elif sell_buttons[4].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 5
+                        sell_item(4)
+                    elif buy_buttons[5].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 6
+                        buy_item(5)
+                    elif sell_buttons[5].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 6
+                        sell_item(5)
+                    elif buy_buttons[6].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 7
+                        buy_item(6)
+                    elif sell_buttons[6].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 7
+                        sell_item(6)
+                    elif buy_buttons[7].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 8
+                        buy_item(7)
+                    elif sell_buttons[7].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 8
+                        sell_item(7)
                 elif event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
                         # Go back to previous state
@@ -583,6 +611,11 @@ class Game:
             # Render
 
             self.screen.fill(self.bg_color)
+            # Player money
+            if player == 1:
+                self.screen.blit(self.p1_money_text, (10, 10))
+            else:
+                self.screen.blit(self.p2_money_text, (10, 10))
             # Shop text
             self.screen.blit(shop_text, shop_text.get_rect(center=(self.window_width / 2, 100)))
             # Return button
@@ -593,138 +626,132 @@ class Game:
                 return_text = self.font_100.render("Return", False, self.color_brown).convert()
             self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
 
-            def draw_items():
-                y = 150
-                item_height = 70
-                for item in items:
-                    # Item text
-                    text = self.font_50.render(item["name"], True, (0,0,0))
-                    self.screen.blit(text, (50,y))
-                    # in bezit
-                    text = self.font_50.render("(in bezit: )", True, (0,0,0))
-                    self.screen.blit(text, (520,y))
-
-                    y += item_height
-
-            draw_items()
-
+            for i in range(len(items)):
+                item = list(items.keys())[i]
+                # Item text
+                text = self.font_50.render(f"{item} (${items[item]}/{int(items[item] * self.resell_percentage)})", False, (0, 0, 0))
+                self.screen.blit(text, (50, 150 + (i * 70)))
+                # Player has
+                if player == 1:
+                    text = self.font_50.render(f"(P1 has: {self.p1.components[item]})", False, (0, 0, 0))
+                else:
+                    text = self.font_50.render(f"(P2 has: {self.p2.components[item]})", False, (0, 0, 0))
+                self.screen.blit(text, (700, 150 + (i * 70)))
 
             # Buy buttons
-            pg.draw.rect(self.screen, self.color_green, buy_button)
-            if buy_button.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[0])
+            if buy_buttons[0].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button.centerx + 5, buy_button.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[0].centerx + 5, buy_buttons[0].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_button2)
-            if buy_button2.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[1])
+            if buy_buttons[1].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button2.centerx + 5, buy_button2.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[1].centerx + 5, buy_buttons[1].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_button3)
-            if buy_button3.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[2])
+            if buy_buttons[2].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button3.centerx + 5, buy_button3.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[2].centerx + 5, buy_buttons[2].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_button4)
-            if buy_button4.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[3])
+            if buy_buttons[3].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button4.centerx + 5, buy_button4.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[3].centerx + 5, buy_buttons[3].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_button5)
-            if buy_button5.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[4])
+            if buy_buttons[4].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button5.centerx + 5, buy_button5.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[4].centerx + 5, buy_buttons[4].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_button6)
-            if buy_button6.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[5])
+            if buy_buttons[5].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button6.centerx + 5, buy_button6.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[5].centerx + 5, buy_buttons[5].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_button7)
-            if buy_button7.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[6])
+            if buy_buttons[6].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button7.centerx + 5, buy_button7.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[6].centerx + 5, buy_buttons[6].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_button8)
-            if buy_button8.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_green, buy_buttons[7])
+            if buy_buttons[7].collidepoint(pg.mouse.get_pos()):
                 buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
             else:
                 buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button8.centerx + 5, buy_button8.centery + 5)))
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[7].centerx + 5, buy_buttons[7].centery + 5)))
 
-            
             # Sell buttons
-            pg.draw.rect(self.screen, self.color_red, sell_button)
-            if sell_button.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[0])
+            if sell_buttons[0].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button.centerx + 5, sell_button.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[0].centerx + 5, sell_buttons[0].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_red, sell_button2)
-            if sell_button2.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[1])
+            if sell_buttons[1].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button2.centerx + 5, sell_button2.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[1].centerx + 5, sell_buttons[1].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_red, sell_button3)
-            if sell_button3.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[2])
+            if sell_buttons[2].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button3.centerx + 5, sell_button3.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[2].centerx + 5, sell_buttons[2].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_red, sell_button4)
-            if sell_button4.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[3])
+            if sell_buttons[3].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button4.centerx + 5, sell_button4.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[3].centerx + 5, sell_buttons[3].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_red, sell_button5)
-            if sell_button5.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[4])
+            if sell_buttons[4].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button5.centerx + 5, sell_button5.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[4].centerx + 5, sell_buttons[4].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_red, sell_button6)
-            if sell_button6.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[5])
+            if sell_buttons[5].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button6.centerx + 5, sell_button6.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[5].centerx + 5, sell_buttons[5].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_red, sell_button7)
-            if sell_button7.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[6])
+            if sell_buttons[6].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button7.centerx + 5, sell_button7.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[6].centerx + 5, sell_buttons[6].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_red, sell_button8)
-            if sell_button8.collidepoint(pg.mouse.get_pos()):
+            pg.draw.rect(self.screen, self.color_red, sell_buttons[7])
+            if sell_buttons[7].collidepoint(pg.mouse.get_pos()):
                 sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
             else:
                 sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
-            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button8.centerx + 5, sell_button8.centery + 5)))
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_buttons[7].centerx + 5, sell_buttons[7].centery + 5)))
 
             # PyGame Render
             pg.display.update()
             self.clock.tick(self.fps)
-    
