@@ -74,23 +74,25 @@
         v Maak eerst 1 speler.
         v Copy paste en geef speler 2 een andere kleur.
         v Maak een heel simpel speler model
-    x 2 dobbelstenen maken
-        # Er staan genoeg youtube videos over 2 dobbelsten maken
-        # Zorg ervoor dat je de dobbelstenen in pygame kan zien
+    v 2 dobbelstenen maken
+        v Er staan genoeg youtube videos over 2 dobbelsten maken
+        v Zorg ervoor dat je de dobbelstenen in pygame kan zien
+    v Jail vakje
+    v Random item vakje
     x Money
         # Een geld systeem maken
-        # Geef startgeld
+        v Geef startgeld
         # Maak een koop systeem
         # Maak een verkoop systeem
         # Als een speler 5000 florins heeft dan wint die en stopt het spel.
     x MP questions
-        # Bepaal eerst wat voor soort vragen / famous persons er op het board komen
+        v Bepaal eerst wat voor soort vragen / famous persons er op het board komen
         # Maak MP vragen met ChatGPT
         # Zorg dat je de vragen in pygame kan zien, miss met buttons om een antwoord te selecteren
     x Components
-        # Hoeveel components
+        v Hoeveel components
         # Een verzamelsysteem voor de components
-        # Een inventory om je aantal components te zien?
+        v Een inventory om je aantal components te zien?
             # Misschien in de shop laten zien?
     x Special Fields
         # Nog te bepalen met groepsgenoot

@@ -2,6 +2,7 @@ import pygame as pg
 import random
 
 from player import Player
+from questions import *
 
 
 class Game:
@@ -20,6 +21,7 @@ class Game:
         self.font_200 = pg.font.Font("res/fonts/pixeltype.ttf", 200)
         self.font_100 = pg.font.Font("res/fonts/pixeltype.ttf", 100)
         self.font_50 = pg.font.Font("res/fonts/pixeltype.ttf", 50)
+        self.font_40 = pg.font.Font("res/fonts/pixeltype.ttf", 40)
         self.font_24 = pg.font.Font("res/fonts/pixeltype.ttf", 25)
 
         self.bg_color = (150, 150, 170)
@@ -53,7 +55,12 @@ class Game:
         self.p1 = Player()
         self.p2 = Player()
 
+        self.p1_money_text = self.font_40.render(str(self.p1.money), False, self.p1_color).convert()
+        self.p2_money_text = self.font_40.render(str(self.p2.money), False, self.p2_color).convert()
+
         self.dice_rolls = [0, 0]
+
+        self.min_break_free_roll = 6  # minimum number you need to roll to break out of jail.
 
         self.round_stages = ["P1_ANNOUNCE_ROLL", "P1_WAIT_FOR_ROLL", "P1_MOVE", "P1_ACTION", "P2_ANNOUNCE_ROLL", "P2_WAIT_FOR_ROLL", "P2_MOVE", "P2_ACTION"]
         self.current_round_stage = 0
@@ -213,12 +220,28 @@ class Game:
                         self.pause()
                     elif event.key == pg.K_SPACE:
                         if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL":
-                            self.dice_roll()
-                            self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}")
+                            if self.p1.jailed:
+                                self.dice_roll()
+                                if sum(self.dice_rolls) < 6:  # if jailed, roll a break-free dice, if less than 6 he does not break free
+                                    self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}, didn't break free", (0, 0, 0))
+                                else:
+                                    self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}, broke free", (0, 0, 0))
+                                    self.p1.position += 1
+                            else:
+                                self.dice_roll()
+                                self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}", self.p1_color)
                             self.next_round_stage()
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL":
-                            self.dice_roll()
-                            self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}")
+                            if self.p2.jailed:
+                                self.dice_roll()
+                                if sum(self.dice_rolls) < self.min_break_free_roll:  # if jailed, roll a break-free dice, if less than 6 he does not break free
+                                    self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}, didn't break free", (0, 0, 0))
+                                else:
+                                    self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}, broke free", (0, 0, 0))
+                                    self.p2.position += 1
+                            else:
+                                self.dice_roll()
+                                self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}", self.p2_color)
                             self.next_round_stage()
                         break
                     elif event.key == pg.K_1:
@@ -273,30 +296,60 @@ class Game:
             self.screen.blit(self.d1_text, self.d1_text.get_rect(midleft=(188, 380)))
             self.screen.blit(self.d2_text, self.d2_text.get_rect(midleft=(350, 380)))
 
+            # Render the player inventories
+            self.screen.blit(self.p1_money_text, (10, 10))
+            self.screen.blit(self.p2_money_text, (10, 40))
+
             # Render the message log
             for i in range(len(self.log)):
                 self.screen.blit(self.log[i], self.log[i].get_rect(topleft=(800, (i * 50) + 20)))
 
             if self.round_stages[self.current_round_stage] == "P1_ANNOUNCE_ROLL":
-                self.add_to_log("P1, press space to roll dice")
+                if self.p1.jailed:
+                    self.add_to_log("P1 is jailed, press space to break out", self.p1_color)
+                else:
+                    self.add_to_log("P1, press space to roll dice", self.p1_color)
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P1_MOVE":
-                self.p1.position = (self.p1.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
+                if not self.p1.jailed:
+                    self.p1.position = (self.p1.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
+                elif self.p1.position == 19:
+                    self.p1.jailed = False
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P1_ACTION":
-                self.add_to_log(f"P1 is on tile: {self.p1.position}")
+                #self.add_to_log(f"P1 is on tile: {self.p1.position}", self.p1_color)
+                if self.p1.position == 18:  # if p1 landed on jail tile
+                    self.p1.jailed = True
+                    self.add_to_log("P2 landed on jail", (0, 0, 0))
+                elif self.p1.position == 16 or self.p1.position == 34:  # random item tile
+                    item = random.choice(list(self.p1.components.keys()))
+                    self.add_to_log(f"P1 got: {item}", self.color_brown)
+                    self.p1.components[item] += 1
+                    print(self.p1.components)
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
-                self.add_to_log("P2, press space to roll dice")
+                if self.p2.jailed:
+                    self.add_to_log("P2 is jailed, press space to break out", self.p2_color)
+                else:
+                    self.add_to_log("P2, press space to roll dice", self.p2_color)
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_MOVE":
-                self.p2.position = (self.p2.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
+                if not self.p2.jailed:
+                    self.p2.position = (self.p2.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
+                elif self.p2.position == 19:
+                    self.p2.jailed = False
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ACTION":
-                self.add_to_log(f"P2 is on tile: {self.p2.position}")
+                #self.add_to_log(f"P2 is on tile: {self.p2.position}", self.p2_color)
+                if self.p2.position == 18:  # if p2 landed on jail tile
+                    self.p2.jailed = True
+                    self.add_to_log("P2 landed on jail", (0, 0, 0))
+                elif self.p2.position == 16 or self.p2.position == 34:  # random item tile
+                    item = random.choice(list(self.p2.components.keys()))
+                    self.add_to_log(f"P2 got: {item}", self.color_brown)
+                    self.p2.components[item] += 1
+                    print(self.p2.components)
                 self.next_round_stage()
-            else:
-                print(self.round_stages[self.current_round_stage])
 
             pg.display.update()
             self.clock.tick(self.fps)
@@ -310,10 +363,10 @@ class Game:
         self.d1_text = self.font_200.render(str(self.dice_rolls[0]), False, "Black").convert()
         self.d2_text = self.font_200.render(str(self.dice_rolls[1]), False, "Black").convert()
 
-    def add_to_log(self, message):
+    def add_to_log(self, message, color=(0, 0, 0)):
         if len(self.log) > self.max_log_size:
             del self.log[0]
-        self.log.append(self.font_50.render(message, False, "Black").convert())
+        self.log.append(self.font_40.render(message, False, color).convert())
 
     def next_round_stage(self):
         self.current_round_stage = (self.current_round_stage + 1) % len(self.round_stages)
