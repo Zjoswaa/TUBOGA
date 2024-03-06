@@ -253,6 +253,13 @@ class Game:
                     elif event.key == pg.K_2:
                         self.p2.position = (self.p2.position + 1) % 36
                         break
+                    elif event.key == pg.K_b:
+                        #if self.p1.position == 9 or self.p1.position == 27:
+                        self.state_stack.append("SHOP")
+                        self.shop()
+                        #elif self.p2.position == 9 or self.p2.position == 27:
+                            #self.state_stack.append("SHOP")
+                            #self.shop()
 
             # Update
 
@@ -513,3 +520,211 @@ class Game:
                 else:
                     self.p2.money += gain
                 self.p2_money_text = self.font_40.render(str(self.p2.money), False, self.p2_color).convert()
+
+################
+        ###############
+        ##################
+        #########################
+        ############################
+
+    def shop(self):
+        shop_text = self.font_100.render("Shop", False, self.text_color).convert()
+        return_button = pg.Rect((1000, 50), (250, 100))
+        return_text = self.font_100.render("Return", False, self.color_brown).convert()
+        
+        buy_button = pg.Rect((260, 140), (100, 50))
+        buy_button2 = pg.Rect((260, 210), (100, 50))
+        buy_button3 = pg.Rect((260, 280), (100, 50))
+        buy_button4 = pg.Rect((260, 350), (100, 50))
+        buy_button5 = pg.Rect((260, 420), (100, 50))
+        buy_button6 = pg.Rect((260, 490), (100, 50))
+        buy_button7 = pg.Rect((260, 560), (100, 50))
+        buy_button8 = pg.Rect((260, 630), (100, 50))
+
+        sell_button = pg.Rect((400, 140), (100, 50))
+        sell_button2 = pg.Rect((400, 210), (100, 50))
+        sell_button3 = pg.Rect((400, 280), (100, 50))
+        sell_button4 = pg.Rect((400, 350), (100, 50))
+        sell_button5 = pg.Rect((400, 420), (100, 50))
+        sell_button6 = pg.Rect((400, 490), (100, 50))
+        sell_button7 = pg.Rect((400, 560), (100, 50))
+        sell_button8 = pg.Rect((400, 630), (100, 50))
+
+        # Informatie over items
+        items = [
+            {"name": "Keyboard"},
+            {"name": "Mouse"},
+            {"name": "Monitor"},
+            {"name": "Printer"},
+            {"name": "CPU"},
+            {"name": "GPU"},
+            {"name": "Motherboard"},
+            {"name": "Mini Tower"},
+        ]
+
+        while self.state_stack[-1] == "SHOP":
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    exit(0)
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    if return_button.collidepoint(pg.mouse.get_pos()):
+                        # Go back to previous state
+                        self.state_stack.pop()
+                        break
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        # Go back to previous state
+                        self.state_stack.pop()
+                        break
+
+            # Update
+
+            # Render
+
+            self.screen.fill(self.bg_color)
+            # Shop text
+            self.screen.blit(shop_text, shop_text.get_rect(center=(self.window_width / 2, 100)))
+            # Return button
+            pg.draw.rect(self.screen, self.color_green, return_button)
+            if return_button.collidepoint(pg.mouse.get_pos()):
+                return_text = self.font_100.render("Return", False, self.color_blue).convert()
+            else:
+                return_text = self.font_100.render("Return", False, self.color_brown).convert()
+            self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
+
+            def draw_items():
+                y = 150
+                item_height = 70
+                for item in items:
+                    # Item text
+                    text = self.font_50.render(item["name"], True, (0,0,0))
+                    self.screen.blit(text, (50,y))
+                    # in bezit
+                    text = self.font_50.render("(in bezit: )", True, (0,0,0))
+                    self.screen.blit(text, (520,y))
+
+                    y += item_height
+
+            draw_items()
+
+
+            # Buy buttons
+            pg.draw.rect(self.screen, self.color_green, buy_button)
+            if buy_button.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button.centerx + 5, buy_button.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_green, buy_button2)
+            if buy_button2.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button2.centerx + 5, buy_button2.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_green, buy_button3)
+            if buy_button3.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button3.centerx + 5, buy_button3.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_green, buy_button4)
+            if buy_button4.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button4.centerx + 5, buy_button4.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_green, buy_button5)
+            if buy_button5.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button5.centerx + 5, buy_button5.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_green, buy_button6)
+            if buy_button6.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button6.centerx + 5, buy_button6.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_green, buy_button7)
+            if buy_button7.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button7.centerx + 5, buy_button7.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_green, buy_button8)
+            if buy_button8.collidepoint(pg.mouse.get_pos()):
+                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+            else:
+                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_button8.centerx + 5, buy_button8.centery + 5)))
+
+            
+            # Sell buttons
+            pg.draw.rect(self.screen, self.color_red, sell_button)
+            if sell_button.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button.centerx + 5, sell_button.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_red, sell_button2)
+            if sell_button2.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button2.centerx + 5, sell_button2.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_red, sell_button3)
+            if sell_button3.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button3.centerx + 5, sell_button3.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_red, sell_button4)
+            if sell_button4.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button4.centerx + 5, sell_button4.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_red, sell_button5)
+            if sell_button5.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button5.centerx + 5, sell_button5.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_red, sell_button6)
+            if sell_button6.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button6.centerx + 5, sell_button6.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_red, sell_button7)
+            if sell_button7.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button7.centerx + 5, sell_button7.centery + 5)))
+
+            pg.draw.rect(self.screen, self.color_red, sell_button8)
+            if sell_button8.collidepoint(pg.mouse.get_pos()):
+                sell_text = self.font_50.render("Sell", False, self.color_yellow).convert()
+            else:
+                sell_text = self.font_50.render("Sell", False, self.color_purple).convert()
+            self.screen.blit(sell_text, sell_text.get_rect(center=(sell_button8.centerx + 5, sell_button8.centery + 5)))
+
+            # PyGame Render
+            pg.display.update()
+            self.clock.tick(self.fps)
+    
