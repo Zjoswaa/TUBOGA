@@ -328,10 +328,24 @@ class Game:
                     item = random.choice(list(self.p1.components.keys()))
                     self.add_to_log(f"P1 got: {item}", self.color_brown)
                     self.p1.components[item] += 1
-                    print(f"P1: {self.p1.components}")
+                    print(f"P1: {self.p1.components}")   
                 elif self.p1.position == 11 or self.p1.position == 29:  # chance tile
                     self.chance(1)
                     print(f"P1 money: {self.p1.money}")
+                    
+                #Nieuw gedeelte -Ryan (verwijder deze comment wanneer gelezen :) )    
+                elif self.p1.position == 2 or self.p1.position == 20: # Event tile
+                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_green)
+                elif self.p1.position == 7 or self.p1.position == 25: # Famous person tile
+                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_gray)
+                elif self.p1.position == 5 or self.p1.position == 14 or self.p1.position == 23 or self.p1.position == 32: # Query tile
+                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_blue)
+                elif self.p1.position == 9 or self.p1.position == 27: # Shop tile
+                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_red)
+                elif self.p1.position == 0: # Start tile
+                    print(f"Dit is de Start tile! Welkom op het begin!") # had ik gebruikt om te checken voor elk speciaal vakje!
+                    self.add_to_log(f"P1 is back at Start!", self.color_yellow)
+                    
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
                 if self.p2.jailed:
@@ -358,6 +372,19 @@ class Game:
                 elif self.p2.position == 11 or self.p2.position == 29:  # chance tile
                     self.chance(2)
                     print(f"P2 money: {self.p2.money}")
+                    
+                #Nieuw gedeelte -Ryan (verwijder deze comment wanneer gelezen :) )    
+                elif self.p2.position == 2 or self.p2.position == 20: # Event tile
+                    self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_green)
+                elif self.p2.position == 7 or self.p2.position == 25: # Famous person tile
+                    self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_gray)
+                elif self.p2.position == 5 or self.p2.position == 14 or self.p2.position == 23 or self.p2.position == 32: # Query tile
+                    self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_blue)
+                elif self.p2.position == 9 or self.p2.position == 27: # Shop tile
+                    self.add_to_log(f"P2 is on tile: {self.p1.position}", self.color_red)
+                elif self.p2.position == 0: # Start tile
+                    self.add_to_log(f"P2 is back at Start!", self.color_yellow)
+                    
                 self.next_round_stage()
 
             pg.display.update()
@@ -388,7 +415,7 @@ class Game:
         if not self.rig_dices:
             item = random.randrange(0, len(self.chances))
         else:
-            item = 9
+            item = 8
         print(f"Rolled: {item}")
         gain = random.randint(self.chances[item][0], self.chances[item][1])
         relatives = ["mom's", "dad's", "grandma's", "grandpa's"]

@@ -88,12 +88,14 @@
         # Als een speler 5000 florins heeft dan wint die en stopt het spel.
     x MP questions
         v Bepaal eerst wat voor soort vragen / famous persons er op het board komen
-        # Maak MP vragen met ChatGPT
+        v Maak MP vragen met ChatGPT
+        x Check of alle vragen wel kloppen
         # Zorg dat je de vragen in pygame kan zien, miss met buttons om een antwoord te selecteren
     x Components
         v Hoeveel components
         # Een verzamelsysteem voor de components
         v Een inventory om je aantal components te zien?
             # Misschien in de shop laten zien?
+        # Willen we de componenten op het beeldscherm zien?
     x Special Fields
         # Nog te bepalen met groepsgenoot
