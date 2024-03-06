@@ -290,7 +290,7 @@ class Game:
 
             # Render the legend
             for i in range(len(legend_text)):
-                self.screen.blit(legend_text[i], legend_text[i].get_rect(topleft=(600, (i * 50) + 175)))
+                self.screen.blit(legend_text[i], legend_text[i].get_rect(topleft=(560, (i * 50) + 175)))
 
             # Render the players
             if self.p1.position == self.p2.position:  # if both players are on the same tile
@@ -314,11 +314,11 @@ class Game:
 
             # Render the message log
             for i in range(len(self.log)):
-                self.screen.blit(self.log[i], self.log[i].get_rect(topleft=(800, (i * 50) + 20)))
+                self.screen.blit(self.log[i], self.log[i].get_rect(topleft=(700, (i * 50) + 20)))
 
             if self.round_stages[self.current_round_stage] == "P1_ANNOUNCE_ROLL":
                 if self.p1.jailed:
-                    self.add_to_log("P1 is jailed, press space to break out", self.p1_color)
+                    self.add_to_log("P1 is jailed, press space to attempt breakout", self.p1_color)
                 else:
                     if self.p1.position == 9 or self.p1.position == 27:
                         self.add_to_log("P1, press space to roll dice, B to shop", self.p1_color)
@@ -335,7 +335,7 @@ class Game:
                 # self.add_to_log(f"P1 is on tile: {self.p1.position}", self.p1_color)
                 if self.p1.position == 18:  # if p1 landed on jail tile
                     self.p1.jailed = True
-                    self.add_to_log("P1 landed on jail", (0, 0, 0))
+                    self.add_to_log("P1 is in jail", (0, 0, 0))
                 elif self.p1.position == 16 or self.p1.position == 34:  # random item tile
                     item = random.choice(list(self.p1.components.keys()))
                     self.add_to_log(f"P1 got: {item}", self.color_brown)
@@ -359,7 +359,7 @@ class Game:
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
                 if self.p2.jailed:
-                    self.add_to_log("P2 is jailed, press space to break out", self.p2_color)
+                    self.add_to_log("P2 is jailed, press space to attempt breakout", self.p2_color)
                 else:
                     if self.p2.position == 9 or self.p2.position == 27:
                         self.add_to_log("P2, press space to roll dice, B to shop", self.p2_color)
@@ -376,7 +376,7 @@ class Game:
                 # self.add_to_log(f"P2 is on tile: {self.p2.position}", self.p2_color)
                 if self.p2.position == 18:  # if p2 landed on jail tile
                     self.p2.jailed = True
-                    self.add_to_log("P2 landed on jail", (0, 0, 0))
+                    self.add_to_log("P2 is in jail", (0, 0, 0))
                 elif self.p2.position == 16 or self.p2.position == 34:  # random item tile
                     item = random.choice(list(self.p2.components.keys()))
                     self.add_to_log(f"P2 got: {item}", self.color_brown)
