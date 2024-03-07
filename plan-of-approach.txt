@@ -83,14 +83,19 @@
     x Money
         # Een geld systeem maken
         v Geef startgeld
+        V Maak een shop
+            # in de shop de prijzen van de onderdelen aangeven (voor koop en verkoop)
         # Maak een koop systeem
         # Maak een verkoop systeem
         # Als een speler 5000 florins heeft dan wint die en stopt het spel.
+        # Each turn they throw 2 dices, their capital increases with the product of the two dices
     x MP questions
         v Bepaal eerst wat voor soort vragen / famous persons er op het board komen
         v Maak MP vragen met ChatGPT
         x Check of alle vragen wel kloppen
         # Zorg dat je de vragen in pygame kan zien, miss met buttons om een antwoord te selecteren
+            # Een menu is hiervoor denk heel handig
+        # vragen voor QUERY, vragen voor FAMOUS person (lijsten maken)
     x Components
         v Hoeveel components
         # Een verzamelsysteem voor de components
@@ -98,4 +103,5 @@
             # Misschien in de shop laten zien?
         # Willen we de componenten op het beeldscherm zien?
     x Special Fields
-        # Nog te bepalen met groepsgenoot
+        # Event -> numbergame (miss nog eentje, maar 1 spel is denk prima)
+        # Als je weer op start komt dan ontvang je geld.
