@@ -24,26 +24,26 @@ questions = [
 
 # Choices
 choices = [
-    ["a) Storing data", "b) Processing instructions", "c) Providing power"],
-    ["a) RAM", "b) ROM", "c) CPU"],
-    ["a) C++", "b) Python", "c) Java"],
-    ["a) Integrated Development Environment", "b) Internet Development Environment", "c) Integrated Design Environment"],
-    ["a) .py", "b) .java", "c) .cpp"],
-    ["a) Iterating over a sequence", "b) Executing code based on conditions", "c) Defining a function"],
-    ["a) //", "b) --", "c) #"],
-    ["a) HyperText Markup Language", "b) HighTech Multimedia Language", "c) Hyperlink and Text Management Language"],
-    ["a) Repeating a block of code a fixed number of times", "b) Iterating over a sequence of elements", "c) Making decisions based on conditions"],
-    ["a) String", "b) Function", "c) Variable"],
-    ["a) Procedural", "b) Object-Oriented", "c) Functional"],
-    ["a) ^", "b) **", "c) %"],
-    ["a) input()", "b) read()", "c) get_input()"],
-    ["a) my_variable", "b) 2variable", "c) variable_2"],
-    ["a) /", "b) //", "c) %"],
-    ["a) 10", "b) 25", "c) 17"],
-    ["a) List", "b) Dictionary", "c) Tuple"],
-    ["a) The length of a string", "b) The number of elements in a list", "c) Both a and b"],
-    ["a) require", "b) import", "c) include"],
-    ["a) Removes an element from the list", "b) Adds an element to the end of the list", "c) Sorts the list in ascending order"]
+    ["A) Storing data", "B) Processing instructions", "C) Providing power"],
+    ["A) RAM", "B) ROM", "C) CPU"],
+    ["A) C++", "B) Python", "C) Java"],
+    ["A) Integrated Development Environment", "B) Internet Development Environment", "C) Integrated Design Environment"],
+    ["A) .py", "B) .java", "C) .cpp"],
+    ["A) Iterating over a sequence", "B) Executing code based on conditions", "C) Defining a function"],
+    ["A) //", "B) --", "C) #"],
+    ["A) HyperText Markup Language", "B) HighTech Multimedia Language", "C) Hyperlink and Text Management Language"],
+    ["A) Repeating a block of code until a condition is met", "B) Repeating a block of code a fixed number of times", "C) Making decisions based on conditions"],
+    ["A) String", "B) Function", "C) Variable"],
+    ["A) Procedural", "B) Object-Oriented", "C) Functional"],
+    ["A) ^", "B) **", "C) %"],
+    ["A) input()", "B) read()", "C) get_input()"],
+    ["A) my_variable", "B) 2variable", "C) variable_2"],
+    ["A) /", "B) //", "C) %"],
+    ["A) 10", "B) 25", "C) 17"],
+    ["A) List", "B) Dictionary", "C) Tuple"],
+    ["A) The length of a string", "B) The number of elements in a list", "C) Both a and b"],
+    ["A) require", "B) import", "C) include"],
+    ["A) Removes an element from the list", "B) Adds an element to the end of the list", "C) Sorts the list in ascending order"]
 ]
 
 # Answers
