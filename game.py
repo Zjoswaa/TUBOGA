@@ -58,6 +58,10 @@ class Game:
 
         self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
         self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+        self.left_to_buy_text = self.font_50.render("Left to buy this turn: ", False, "White").convert()
+        self.nums_in_word_text = self.font_50.render("Number that are in the word: 0", False, "Black").convert()
+        self.nums_correct_text = self.font_50.render("Numbers in the correct spot: 0", False, "Black").convert()
+        self.guesses_left_text = self.font_50.render("Guesses left: ", False, "Black").convert()
 
         self.dice_rolls = [0, 0]
 
@@ -71,6 +75,15 @@ class Game:
         self.resell_percentage = 0.8
 
         self.query_reward = (100, 200)
+        self.event_reward = (250, 750)
+
+        self.computer_price = 1000
+
+        self.back_at_start_reward = (50, 100)
+
+        self.max_event_guesses = 9
+
+        self.event_answer = ""
 
     # Shows the start menu
     def start(self):
@@ -228,6 +241,10 @@ class Game:
                     elif event.key == pg.K_SPACE:
                         if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL":
                             self.p1.has_done_query_this_turn = False
+                            self.p1.has_done_event_this_turn = False
+                            self.p1.has_sold_computer_this_turn = False
+                            self.p1.items_bought_this_turn = 0
+                            self.p1.guesses_done_this_turn = 0
                             if self.p1.jailed:
                                 self.dice_roll()
                                 if sum(self.dice_rolls) < 6:  # if jailed, roll a break-free dice, if less than 6 he does not break free
@@ -241,6 +258,10 @@ class Game:
                             self.next_round_stage()
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL":
                             self.p2.has_done_query_this_turn = False
+                            self.p2.has_done_event_this_turn = False
+                            self.p2.has_sold_computer_this_turn = False
+                            self.p2.items_bought_this_turn = 0
+                            self.p2.guesses_done_this_turn = 0
                             if self.p2.jailed:
                                 self.dice_roll()
                                 if sum(self.dice_rolls) < self.min_break_free_roll:  # if jailed, roll a break-free dice, if less than 6 he does not break free
@@ -273,6 +294,13 @@ class Game:
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [5, 14, 23, 32] and not self.p2.has_done_query_this_turn:
                             self.state_stack.append("QUERY")
                             self.query(2)
+                    elif event.key == pg.K_e:
+                        if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position in [2, 20] and not self.p1.has_done_event_this_turn:
+                            self.state_stack.append("EVENT")
+                            self.event(1)
+                        elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [2, 20] and not self.p2.has_done_event_this_turn:
+                            self.state_stack.append("EVENT")
+                            self.event(2)
 
             # Update
 
@@ -335,6 +363,8 @@ class Game:
                         self.add_to_log("P1, press space to roll dice, B to shop", self.p1_color)
                     elif self.p1.position in [5, 14, 23, 32]:
                         self.add_to_log("P1, press space to roll dice, Q for query", self.p1_color)
+                    elif self.p1.position in [2, 20]:
+                        self.add_to_log("P1, press space to roll dice, E for event", self.p1_color)
                     else:
                         self.add_to_log("P1, press space to roll dice", self.p1_color)
                 self.next_round_stage()
@@ -369,7 +399,10 @@ class Game:
                 elif self.p1.position == 9 or self.p1.position == 27:  # Shop tile
                     self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_red)
                 elif self.p1.position == 0:  # Start tile
-                    self.add_to_log(f"P1 is back at Start!", self.color_yellow)
+                    reward = random.randint(self.back_at_start_reward[0], self.back_at_start_reward[1])
+                    self.add_to_log(f"P1 is back at start, +${reward}", self.color_yellow)
+                    self.p1.money += reward
+                    self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
 
                 self.next_round_stage()
             elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
@@ -380,6 +413,8 @@ class Game:
                         self.add_to_log("P2, press space to roll dice, B to shop", self.p2_color)
                     elif self.p2.position in [5, 14, 23, 32]:
                         self.add_to_log("P2, press space to roll dice, Q for query", self.p2_color)
+                    elif self.p2.position in [2, 20]:
+                        self.add_to_log("P2, press space to roll dice, E for event", self.p2_color)
                     else:
                         self.add_to_log("P2, press space to roll dice", self.p2_color)
                 self.next_round_stage()
@@ -414,7 +449,10 @@ class Game:
                 elif self.p2.position == 9 or self.p2.position == 27:  # Shop tile
                     self.add_to_log(f"P2 is on tile: {self.p1.position}", self.color_red)
                 elif self.p2.position == 0:  # Start tile
-                    self.add_to_log(f"P2 is back at Start!", self.color_yellow)
+                    reward = random.randint(self.back_at_start_reward[0], self.back_at_start_reward[1])
+                    self.add_to_log(f"P2 is back at start, +${reward}", self.color_yellow)
+                    self.p2.money += reward
+                    self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
 
                 self.next_round_stage()
 
@@ -541,6 +579,23 @@ class Game:
                 self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
 
     def shop(self, player):
+        def check_can_sell_computer():
+            if player == 1:
+                self.p1.can_sell_computer = True
+                _keys = list(self.p1.components.keys())
+                for _item in _keys:
+                    if self.p1.components[_item] == 0:
+                        self.p1.can_sell_computer = False
+                        break
+            else:
+                self.p2.can_sell_computer = True
+                _keys = list(self.p2.components.keys())
+                for _item in _keys:
+                    if self.p2.components[_item] == 0:
+                        self.p2.can_sell_computer = False
+                        break
+
+        check_can_sell_computer()
         shop_text = self.font_100.render("Shop", False, self.text_color).convert()
         return_button = pg.Rect((1000, 590), (250, 100))
         return_text = self.font_100.render("Return", False, self.color_brown).convert()
@@ -553,15 +608,29 @@ class Game:
         keys = list(items.keys())
         values = list(items.values())
 
+        sell_computer_button = pg.Rect((1000, 450), (250, 100))
+        # sell_computer_text = self.font_50.render(f"Sell PC: ${self.computer_price}", False, self.color_purple).convert()
+
+        if player == 1:
+            self.left_to_buy_text = self.font_50.render(f"Left to buy this turn: {int((len(self.p1.components) / 2) - self.p1.items_bought_this_turn)}", False, "White").convert()
+        else:
+            self.left_to_buy_text = self.font_50.render(f"Left to buy this turn: {int((len(self.p2.components) / 2) - self.p2.items_bought_this_turn)}", False, "White").convert()
+
         def buy_item(index):
-            if player == 1 and self.p1.money >= values[index]:
-                self.p1.money -= values[index]
-                self.p1.components[keys[index]] += 1
-                self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
-            elif player == 2 and self.p2.money > values[index]:
-                self.p2.money -= values[index]
-                self.p2.components[keys[index]] += 1
-                self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                if player == 1 and self.p1.money >= values[index]:
+                    self.p1.items_bought_this_turn += 1
+                    self.left_to_buy_text = self.font_50.render(f"Left to buy this turn: {int((len(self.p1.components) / 2) - self.p1.items_bought_this_turn)}", False, "White").convert()
+                    self.p1.money -= values[index]
+                    self.p1.components[keys[index]] += 1
+                    self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+                elif player == 2 and self.p2.money > values[index]:
+                    self.p2.items_bought_this_turn += 1
+                    self.left_to_buy_text = self.font_50.render(f"Left to buy this turn: {int((len(self.p2.components) / 2) - self.p2.items_bought_this_turn)}", False, "White").convert()
+                    self.p2.money -= values[index]
+                    self.p2.components[keys[index]] += 1
+                    self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+            check_can_sell_computer()
 
         def sell_item(index):
             if player == 1 and self.p1.components[keys[index]] > 0:
@@ -572,6 +641,7 @@ class Game:
                 self.p2.money += int(values[index] * self.resell_percentage)
                 self.p2.components[keys[index]] -= 1
                 self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+            check_can_sell_computer()
 
         while self.state_stack[-1] == "SHOP":
             for event in pg.event.get():
@@ -615,6 +685,23 @@ class Game:
                         buy_item(7)
                     elif sell_buttons[7].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 8
                         sell_item(7)
+
+                    elif sell_computer_button.collidepoint(pg.mouse.get_pos()):
+                        if player == 1 and self.p1.can_sell_computer and not self.p1.has_sold_computer_this_turn:
+                            for item in list(self.p1.components):
+                                self.p1.components[item] -= 1
+                            self.p1.money += self.computer_price
+                            self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+                            self.screen.blit(self.p1_money_text, (10, 10))
+                            self.p1.has_sold_computer_this_turn = True
+                        elif player == 2 and self.p2.can_sell_computer and not self.p2.has_sold_computer_this_turn:
+                            for item in list(self.p2.components):
+                                self.p2.components[item] -= 1
+                            self.p2.money += self.computer_price
+                            self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+                            self.screen.blit(self.p2_money_text, (10, 10))
+                            self.p2.has_sold_computer_this_turn = True
+                        check_can_sell_computer()
                 elif event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
                         # Go back to previous state
@@ -632,7 +719,9 @@ class Game:
             else:
                 self.screen.blit(self.p2_money_text, (10, 10))
             # Shop text
-            self.screen.blit(shop_text, shop_text.get_rect(center=(self.window_width / 2, 100)))
+            self.screen.blit(shop_text, shop_text.get_rect(center=(self.window_width / 2, 50)))
+            # Left to buy this turn text
+            self.screen.blit(self.left_to_buy_text, self.left_to_buy_text.get_rect(midleft=(10, 60)))
             # Return button
             pg.draw.rect(self.screen, self.color_green, return_button)
             if return_button.collidepoint(pg.mouse.get_pos()):
@@ -640,7 +729,23 @@ class Game:
             else:
                 return_text = self.font_100.render("Return", False, self.color_brown).convert()
             self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
+            # Sell computer button
+            if player == 1 and self.p1.can_sell_computer and not self.p1.has_sold_computer_this_turn:
+                pg.draw.rect(self.screen, self.color_red, sell_computer_button)
+                if sell_computer_button.collidepoint(pg.mouse.get_pos()):
+                    sell_computer_text = self.font_50.render(f"Sell PC: ${self.computer_price}", False, self.color_yellow).convert()
+                else:
+                    sell_computer_text = self.font_50.render(f"Sell PC: ${self.computer_price}", False, self.color_purple).convert()
+                self.screen.blit(sell_computer_text, sell_computer_text.get_rect(midleft=(1025, 505)))
+            elif player == 2 and self.p2.can_sell_computer and not self.p2.has_sold_computer_this_turn:
+                pg.draw.rect(self.screen, self.color_red, sell_computer_button)
+                if sell_computer_button.collidepoint(pg.mouse.get_pos()):
+                    sell_computer_text = self.font_50.render(f"Sell PC: ${self.computer_price}", False, self.color_yellow).convert()
+                else:
+                    sell_computer_text = self.font_50.render(f"Sell PC: ${self.computer_price}", False, self.color_purple).convert()
+                self.screen.blit(sell_computer_text, sell_computer_text.get_rect(midleft=(1025, 505)))
 
+            # Item names
             for i in range(len(items)):
                 item = list(items.keys())[i]
                 # Item text
@@ -648,67 +753,75 @@ class Game:
                 self.screen.blit(text, (50, 150 + (i * 70)))
                 # Player has
                 if player == 1:
-                    text = self.font_50.render(f"(P1 has: {self.p1.components[item]})", False, (0, 0, 0))
+                    text = self.font_50.render(f"(You have: {self.p1.components[item]})", False, (0, 0, 0))
                 else:
-                    text = self.font_50.render(f"(P2 has: {self.p2.components[item]})", False, (0, 0, 0))
+                    text = self.font_50.render(f"(You have: {self.p2.components[item]})", False, (0, 0, 0))
                 self.screen.blit(text, (700, 150 + (i * 70)))
 
             # Buy buttons
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[0])
-            if buy_buttons[0].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[0].centerx + 5, buy_buttons[0].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[0])
+                if buy_buttons[0].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[0].centerx + 5, buy_buttons[0].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[1])
-            if buy_buttons[1].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[1].centerx + 5, buy_buttons[1].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[1])
+                if buy_buttons[1].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[1].centerx + 5, buy_buttons[1].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[2])
-            if buy_buttons[2].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[2].centerx + 5, buy_buttons[2].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[2])
+                if buy_buttons[2].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[2].centerx + 5, buy_buttons[2].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[3])
-            if buy_buttons[3].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[3].centerx + 5, buy_buttons[3].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[3])
+                if buy_buttons[3].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[3].centerx + 5, buy_buttons[3].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[4])
-            if buy_buttons[4].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[4].centerx + 5, buy_buttons[4].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[4])
+                if buy_buttons[4].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[4].centerx + 5, buy_buttons[4].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[5])
-            if buy_buttons[5].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[5].centerx + 5, buy_buttons[5].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[5])
+                if buy_buttons[5].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[5].centerx + 5, buy_buttons[5].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[6])
-            if buy_buttons[6].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[6].centerx + 5, buy_buttons[6].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[6])
+                if buy_buttons[6].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[6].centerx + 5, buy_buttons[6].centery + 5)))
 
-            pg.draw.rect(self.screen, self.color_green, buy_buttons[7])
-            if buy_buttons[7].collidepoint(pg.mouse.get_pos()):
-                buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
-            else:
-                buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
-            self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[7].centerx + 5, buy_buttons[7].centery + 5)))
+            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+                pg.draw.rect(self.screen, self.color_green, buy_buttons[7])
+                if buy_buttons[7].collidepoint(pg.mouse.get_pos()):
+                    buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
+                else:
+                    buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
+                self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[7].centerx + 5, buy_buttons[7].centery + 5)))
 
             # Sell buttons
             pg.draw.rect(self.screen, self.color_red, sell_buttons[0])
@@ -772,8 +885,6 @@ class Game:
             self.clock.tick(self.fps)
 
     def query(self, player):
-        # TODO onthouden dat we has_done_query naar true zetten bij een antwoord
-
         return_button = pg.Rect((1000, 590), (250, 100))
         return_text = self.font_100.render("Return", False, self.color_brown).convert()
 
@@ -869,7 +980,6 @@ class Game:
                         self.state_stack.pop()
                         break
 
-
             # Update
 
             # Render
@@ -906,6 +1016,141 @@ class Game:
             else:
                 return_text = self.font_100.render("Return", False, self.color_brown).convert()
             self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
+
+            # PyGame Render
+            pg.display.update()
+            self.clock.tick(self.fps)
+
+    def event(self, player):
+        self.nums_in_word_text = self.font_50.render("Number that are in the word: 0", False, "Black").convert()
+        self.nums_correct_text = self.font_50.render("Numbers in the correct spot: 0", False, "Black").convert()
+        if player == 1:
+            self.guesses_left_text = self.font_50.render(f"Guesses left: {self.max_event_guesses - self.p1.guesses_done_this_turn}", False, "Black").convert()
+        else:
+            self.guesses_left_text = self.font_50.render(f"Guesses left: {self.max_event_guesses - self.p2.guesses_done_this_turn}", False, "Black").convert()
+        if (player == 1 and self.p1.guesses_done_this_turn == 0) or (player == 2 and self.p2.guesses_done_this_turn == 0):
+            self.event_answer = ""
+        while len(self.event_answer) < 4:
+            char = str(random.randint(1, 6))
+            while char in self.event_answer:
+                char = str(random.randint(1, 6))
+            self.event_answer += char
+        print(f"Answer: {self.event_answer}")
+        user_text = ""
+        user_text_display = self.font_50.render(user_text, False, (50, 255, 0))
+
+        user_text_container = pg.Rect(((self.window_width / 2) - 40, 100), (80, 30))
+
+        return_button = pg.Rect((1000, 590), (250, 100))
+
+        instruction_text = [self.font_40.render("Input 4 numbers between 1 and 6 and hit enter, the numbers that are in the correct spot and numbers", False, "Black").convert(),
+                            self.font_40.render("that are in the answer but not in the correct spot are shown.", False, "Black").convert()]
+        note_text = self.font_24.render("Note: the answer contains no duplicate numbers. (eg. 2112 does not occur)", False, self.color_red).convert()
+
+        while self.state_stack[-1] == "EVENT":
+            if player == 1 and self.p1.guesses_done_this_turn == self.max_event_guesses:
+                self.add_to_log("P1 did not guess the number", self.color_green)
+                self.p1.has_done_event_this_turn = True
+                self.state_stack.pop()
+                break
+            elif player == 2 and self.p2.guesses_done_this_turn == self.max_event_guesses:
+                self.add_to_log("P2 did not guess the number", self.color_green)
+                self.p2.has_done_event_this_turn = True
+                self.state_stack.pop()
+                break
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    exit(0)
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    if return_button.collidepoint(pg.mouse.get_pos()):
+                        # Go back to previous state
+                        self.state_stack.pop()
+                        break
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        # Go back to previous state
+                        self.state_stack.pop()
+                        break
+                    elif event.key == pg.K_BACKSPACE:
+                        if len(user_text) > 0:
+                            user_text = user_text[:-1]
+                            user_text_display = self.font_50.render(user_text, False, (50, 255, 0))
+                    elif event.key == pg.K_RETURN:
+                        if user_text == self.event_answer:
+                            reward = random.randint(self.event_reward[0], self.event_reward[1])
+                            if player == 1:
+                                self.add_to_log(f"P1 guessed the number, +${reward}", self.color_green)
+                                self.p1.money += reward
+                                self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+                                self.p1.has_done_event_this_turn = True
+                            else:
+                                self.add_to_log(f"P2 guessed the number +${reward}", self.color_green)
+                                self.p2.money += reward
+                                self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+                                self.p2.has_done_event_this_turn = True
+                            self.state_stack.pop()
+                            break
+                        elif len(user_text) == 4:
+                            if player == 1:
+                                self.p1.guesses_done_this_turn += 1
+                                self.guesses_left_text = self.font_50.render(f"Guesses left: {self.max_event_guesses - self.p1.guesses_done_this_turn}", False, "Black").convert()
+                            else:
+                                self.p2.guesses_done_this_turn += 1
+                                self.guesses_left_text = self.font_50.render(f"Guesses left: {self.max_event_guesses - self.p2.guesses_done_this_turn}", False, "Black").convert()
+                            correct = 0
+                            in_word = 0
+                            print(user_text)
+                            for i in range(4):
+                                if user_text[i] == self.event_answer[i]:
+                                    correct += 1
+                                elif user_text[i] in self.event_answer:
+                                    in_word += 1
+                            self.nums_in_word_text = self.font_50.render(f"Number that are in the word: {in_word}", False, "Black").convert()
+                            self.nums_correct_text = self.font_50.render(f"Numbers in the correct spot: {correct}", False, "Black").convert()
+                            user_text = ""
+                            user_text_display = self.font_50.render(user_text, False, (50, 255, 0))
+
+                elif event.type == pg.TEXTINPUT:
+                    if event.text in ["1", "2", "3", "4", "5", "6"] and len(user_text) < 4:
+                        user_text += event.text
+                        user_text_display = self.font_50.render(user_text, False, (50, 255, 0))
+
+            # Update
+
+            # Render
+
+            self.screen.fill(self.bg_color)
+            # Return button
+            pg.draw.rect(self.screen, self.color_green, return_button)
+            if return_button.collidepoint(pg.mouse.get_pos()):
+                return_text = self.font_100.render("Return", False, self.color_blue).convert()
+            else:
+                return_text = self.font_100.render("Return", False, self.color_brown).convert()
+            self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
+
+            # Instruction text
+            for i in range(len(instruction_text)):
+                self.screen.blit(instruction_text[i], instruction_text[i].get_rect(midtop=(self.window_width / 2, (i * 20) + 10)))
+
+            # Note text
+            self.screen.blit(note_text, note_text.get_rect(midtop=(self.window_width / 2, 50 + 10)))
+
+            # User text container
+            if player == 1:
+                pg.draw.rect(self.screen, self.p1_color, user_text_container, 2)
+            else:
+                pg.draw.rect(self.screen, self.p2_color, user_text_container, 2)
+            # User Text
+            self.screen.blit(user_text_display, user_text_display.get_rect(topleft=((self.window_width / 2) - 36, 104)))
+
+            # Guesses left text
+            self.screen.blit(self.guesses_left_text, self.guesses_left_text.get_rect(topleft=(10, 400)))
+
+            # Number information text
+            self.screen.blit(self.nums_in_word_text, self.nums_in_word_text.get_rect(topleft=(10, 200)))
+            self.screen.blit(self.nums_correct_text, self.nums_correct_text.get_rect(topleft=(10, 300)))
 
             # PyGame Render
             pg.display.update()

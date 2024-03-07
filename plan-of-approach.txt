@@ -80,6 +80,7 @@
     v Jail vakje
     v Random item vakje
     v Chance vakje
+    v Event vakje
     x Money
         v Een geld systeem maken
         v Geef startgeld
