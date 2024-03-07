@@ -3,6 +3,7 @@ import random
 
 from player import Player
 from questions import *
+from famousperson import *
 
 
 class Game:
@@ -76,6 +77,7 @@ class Game:
 
         self.query_reward = (100, 200)
         self.event_reward = (250, 750)
+        self.famous_reward = (100, 250)
 
         self.computer_price = 1000
 
@@ -242,6 +244,7 @@ class Game:
                         if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL":
                             self.p1.has_done_query_this_turn = False
                             self.p1.has_done_event_this_turn = False
+                            self.p1.has_done_famous_this_turn = False
                             self.p1.has_sold_computer_this_turn = False
                             self.p1.items_bought_this_turn = 0
                             self.p1.guesses_done_this_turn = 0
@@ -259,6 +262,7 @@ class Game:
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL":
                             self.p2.has_done_query_this_turn = False
                             self.p2.has_done_event_this_turn = False
+                            self.p2.has_done_famous_this_turn = False
                             self.p2.has_sold_computer_this_turn = False
                             self.p2.items_bought_this_turn = 0
                             self.p2.guesses_done_this_turn = 0
@@ -301,6 +305,13 @@ class Game:
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [2, 20] and not self.p2.has_done_event_this_turn:
                             self.state_stack.append("EVENT")
                             self.event(2)
+                    elif event.key == pg.K_f:
+                        if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position in [7, 25] and not self.p1.has_done_famous_this_turn:
+                            self.state_stack.append("FAMOUS")
+                            self.famous(1)
+                        elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [7, 25] and not self.p2.has_done_famous_this_turn:
+                            self.state_stack.append("FAMOUS")
+                            self.famous(2)
 
             # Update
 
@@ -365,6 +376,8 @@ class Game:
                         self.add_to_log("P1, press space to roll dice, Q for query", self.p1_color)
                     elif self.p1.position in [2, 20]:
                         self.add_to_log("P1, press space to roll dice, E for event", self.p1_color)
+                    elif self.p1.position in [7, 25]:
+                        self.add_to_log("P1, press space to roll dice, F for famous", self.p1_color)
                     else:
                         self.add_to_log("P1, press space to roll dice", self.p1_color)
                 self.next_round_stage()
@@ -415,6 +428,8 @@ class Game:
                         self.add_to_log("P2, press space to roll dice, Q for query", self.p2_color)
                     elif self.p2.position in [2, 20]:
                         self.add_to_log("P2, press space to roll dice, E for event", self.p2_color)
+                    elif self.p2.position in [7, 25]:
+                        self.add_to_log("P2, press space to roll dice, F for famous", self.p2_color)
                     else:
                         self.add_to_log("P2, press space to roll dice", self.p2_color)
                 self.next_round_stage()
@@ -1151,6 +1166,167 @@ class Game:
             # Number information text
             self.screen.blit(self.nums_in_word_text, self.nums_in_word_text.get_rect(topleft=(10, 200)))
             self.screen.blit(self.nums_correct_text, self.nums_correct_text.get_rect(topleft=(10, 300)))
+
+            # PyGame Render
+            pg.display.update()
+            self.clock.tick(self.fps)
+            
+
+    def famous(self, player):
+        return_button = pg.Rect((1000, 590), (250, 100))
+        return_text = self.font_100.render("Return", False, self.color_brown).convert()
+
+        random_num = random.randrange(len(famous_questions))
+
+        question = famous_questions[random_num]
+        question_text = self.font_40.render(question, False, "Black").convert()
+
+        question_choices = famous_choices[random_num]
+        choices_texts = []
+        for choice in question_choices:
+            choices_texts.append(self.font_40.render(choice, False, "Black").convert())
+
+        correct_answer = famous_answers[random_num]
+        print(correct_answer)
+
+        answer_buttons = [pg.Rect((280, 400), (100, 100)), pg.Rect((480, 400), (100, 100)), pg.Rect((680, 400), (100, 100)), pg.Rect(((880, 400), (100, 100)))]
+        answer_button_texts = [self.font_100.render("A", False, "Black").convert(), self.font_100.render("B", False, "Black").convert(), self.font_100.render("C", False, "Black").convert(), self.font_100.render("B", False, "Black").convert()]
+
+        while self.state_stack[-1] == "FAMOUS":
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    exit(0)
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    if return_button.collidepoint(pg.mouse.get_pos()):
+                        # Go back to previous state
+                        self.state_stack.pop()
+                        break
+                    else:
+                        if answer_buttons[0].collidepoint(pg.mouse.get_pos()):  # Player chose A
+                            if player == 1:
+                                self.p1.has_done_famous_this_turn = True
+                                if correct_answer == 0:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p1.money += reward
+                                    self.add_to_log(f"P1 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P1 chose the wrong answer", self.color_gray)
+                            else:
+                                self.p2.has_done_famous_this_turn = True
+                                if correct_answer == 0:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p2.money += reward
+                                    self.add_to_log(f"P2 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P2 chose the wrong answer", self.color_gray)
+
+                        if answer_buttons[1].collidepoint(pg.mouse.get_pos()):  # Player chose B
+                            if player == 1:
+                                self.p1.has_done_famous_this_turn = True
+                                if correct_answer == 1:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p1.money += reward
+                                    self.add_to_log(f"P1 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P1 chose the wrong answer", self.color_gray)
+                            else:
+                                self.p2.has_done_famous_this_turn = True
+                                if correct_answer == 1:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p2.money += reward
+                                    self.add_to_log(f"P2 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P2 chose the wrong answer", self.color_gray)
+
+                        if answer_buttons[2].collidepoint(pg.mouse.get_pos()):  # Player chose C
+                            if player == 1:
+                                self.p1.has_done_famous_this_turn = True
+                                if correct_answer == 2:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p1.money += reward
+                                    self.add_to_log(f"P1 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P1 chose the wrong answer", self.color_gray)
+                            else:
+                                self.p2.has_done_famous_this_turn = True
+                                if correct_answer == 2:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p2.money += reward
+                                    self.add_to_log(f"P2 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P2 chose the wrong answer", self.color_gray)
+                                    
+                        if answer_buttons[2].collidepoint(pg.mouse.get_pos()):  # Player chose D
+                            if player == 1:
+                                self.p1.has_done_famous_this_turn = True
+                                if correct_answer == 3:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p1.money += reward
+                                    self.add_to_log(f"P1 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P1 chose the wrong answer", self.color_gray)
+                            else:
+                                self.p2.has_done_famous_this_turn = True
+                                if correct_answer == 3:  # Correct answer chosen
+                                    reward = random.randint(self.famous_reward[0], self.famous_reward[1])
+                                    self.p2.money += reward
+                                    self.add_to_log(f"P2 chose the correct answer, +${reward}", self.color_gray)
+                                else:  # Wrong answer chosen
+                                    self.add_to_log("P2 chose the wrong answer", self.color_gray)
+
+
+                        self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+                        self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+                        self.state_stack.pop()
+                        break
+
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        # Go back to previous state
+                        self.state_stack.pop()
+                        break
+
+            # Update
+
+            # Render
+
+            self.screen.fill(self.color_gray)
+            # Question text
+            self.screen.blit(question_text, question_text.get_rect(center=(self.window_width / 2, 50)))
+            # Choices text
+            for i in range(len(choices_texts)):
+                self.screen.blit(choices_texts[i], choices_texts[i].get_rect(midleft=(50, 150 + (i * 70))))
+            # Answer buttons
+            for button in answer_buttons:
+                pg.draw.rect(self.screen, self.color_green, button)
+            # Check button hover
+            if answer_buttons[0].collidepoint(pg.mouse.get_pos()):
+                answer_button_texts[0] = self.font_100.render("A", False, "White").convert()
+            else:
+                answer_button_texts[0] = self.font_100.render("A", False, "Black").convert()
+            if answer_buttons[1].collidepoint(pg.mouse.get_pos()):
+                answer_button_texts[1] = self.font_100.render("B", False, "White").convert()
+            else:
+                answer_button_texts[1] = self.font_100.render("B", False, "Black").convert()
+            if answer_buttons[2].collidepoint(pg.mouse.get_pos()):
+                answer_button_texts[2] = self.font_100.render("C", False, "White").convert()
+            else:
+                answer_button_texts[2] = self.font_100.render("C", False, "Black").convert()
+            if answer_buttons[3].collidepoint(pg.mouse.get_pos()):
+                answer_button_texts[3] = self.font_100.render("D", False, "White").convert()
+            else:
+                answer_button_texts[3] = self.font_100.render("D", False, "Black").convert()
+            # Answer button text
+            for i in range(len(answer_button_texts)):
+                self.screen.blit(answer_button_texts[i], answer_button_texts[i].get_rect(center=((i * 200) + 335, 455)))
+            # Return button
+            pg.draw.rect(self.screen, self.color_green, return_button)
+            if return_button.collidepoint(pg.mouse.get_pos()):
+                return_text = self.font_100.render("Return", False, self.color_blue).convert()
+            else:
+                return_text = self.font_100.render("Return", False, self.color_brown).convert()
+            self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
 
             # PyGame Render
             pg.display.update()
