@@ -8,6 +8,7 @@ class Player:
         self.has_done_event_this_turn = False
         self.has_done_famous_this_turn = False
         self.has_sold_computer_this_turn = False
+        self.has_traded_this_turn = False
         self.items_bought_this_turn = 0
         self.guesses_done_this_turn = 0
         self.can_sell_computer = False
