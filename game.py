@@ -59,6 +59,9 @@ class Game:
 
         self.p1 = Player()
         self.p2 = Player()
+        # uncomment and rig dices to 2 to make p2 initialize trade
+        # comment and rig dices to 2 to make p1 initialize trade
+        # self.p2.position = 2
 
         self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
         self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
@@ -70,6 +73,7 @@ class Game:
         self.dice_rolls = [0, 0]
 
         self.min_break_free_roll = 6  # minimum number you need to roll to break out of jail.
+        self.max_buy_per_round = 4 # maximum of items a player can buy each round in the shop
 
         self.round_stages = ["P1_ANNOUNCE_ROLL", "P1_WAIT_FOR_ROLL", "P1_MOVE", "P1_ACTION", "P2_ANNOUNCE_ROLL", "P2_WAIT_FOR_ROLL", "P2_MOVE", "P2_ACTION"]
         self.current_round_stage = 0
@@ -89,6 +93,10 @@ class Game:
         self.max_event_guesses = 9
 
         self.event_answer = ""
+
+        self.win_condition = 5000
+        self.winner = 0  # 0: No winner yet, 1: P1 wins, 2: P2 wins
+        self.logged_win_message = False  # so the win message is only logged once
 
     # Shows the start menu
     def start(self):
@@ -168,9 +176,8 @@ class Game:
     def pause(self):
         paused_text = self.font_100.render("Paused", False, self.text_color).convert()
         return_button = pg.Rect((80, 500), (250, 100))
-        return_text = self.font_100.render("Return", False, self.color_brown).convert()
         quit_button = pg.Rect((1000, 500), (200, 100))
-        quit_text = self.font_100.render("Quit", False, self.color_purple).convert()
+        restart_button = pg.Rect((515, 550), (250, 100))
 
         while self.state_stack[-1] == "PAUSE":
             for event in pg.event.get():
@@ -183,6 +190,10 @@ class Game:
                         exit(0)
                     elif return_button.collidepoint(pg.mouse.get_pos()):
                         # Go back to previous state
+                        self.state_stack.pop()
+                        break
+                    elif restart_button.collidepoint(pg.mouse.get_pos()):
+                        self.restart()
                         self.state_stack.pop()
                         break
                 elif event.type == pg.KEYDOWN:
@@ -212,6 +223,13 @@ class Game:
             else:
                 quit_text = self.font_100.render("Quit", False, self.color_purple).convert()
             self.screen.blit(quit_text, quit_text.get_rect(center=(quit_button.centerx + 5, quit_button.centery + 5)))
+            # Restart button
+            pg.draw.rect(self.screen, self.color_green, restart_button)
+            if restart_button.collidepoint(pg.mouse.get_pos()):
+                restart_text = self.font_100.render("Restart", False, self.color_yellow).convert()
+            else:
+                restart_text = self.font_100.render("Restart", False, self.color_purple).convert()
+            self.screen.blit(restart_text, restart_text.get_rect(center=(restart_button.centerx + 5, restart_button.centery + 5)))
             # Game icon
             self.screen.blit(self.pause_icon, self.pause_icon.get_rect(center=(self.window_width / 2, self.window_height / 2)))
             # PyGame Render
@@ -220,17 +238,18 @@ class Game:
 
     # Shows the game
     def game(self):
-
-        legend_text = [self.font_24.render("Start", False, self.color_yellow).convert(),
-                       self.font_24.render("Shop", False, self.color_red).convert(),
-                       self.font_24.render("Query", False, self.color_blue).convert(),
-                       self.font_24.render("Chance", False, self.color_purple).convert(),
-                       self.font_24.render("Event", False, self.color_green).convert(),
-                       self.font_24.render("Jail", False, "Black").convert(),
-                       self.font_24.render("Famous Person", False, self.color_gray).convert(),
-                       self.font_24.render("Random Item", False, self.color_brown).convert()]
-
+        self.add_to_log(f"Welcome to TUBOGA. First player to ${self.win_condition} wins!", "White")
+        self.add_to_log(f"This is the log, the most recent {self.max_log_size} events are shown here.", "White")
         while self.state_stack[-1] == "GAME":
+            self.check_for_winner()
+            if self.winner == 1 and not self.logged_win_message:
+                self.add_to_log(f"P1 has earned ${self.win_condition} and wins!", self.p1_color)
+                self.add_to_log("Thanks for playing :)", "White")
+                self.logged_win_message = True
+            elif self.winner == 2 and not self.logged_win_message:
+                self.add_to_log(f"P2 has earned ${self.win_condition} and wins!", self.p2_color)
+                self.add_to_log("Thanks for playing :)", "White")
+                self.logged_win_message = True
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
@@ -240,17 +259,18 @@ class Game:
                         # Show pause menu
                         self.state_stack.append("PAUSE")
                         self.pause()
-                    elif event.key == pg.K_SPACE:
+                    elif event.key == pg.K_SPACE and not self.winner:
                         if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL":
                             self.p1.has_done_query_this_turn = False
                             self.p1.has_done_event_this_turn = False
                             self.p1.has_done_famous_this_turn = False
                             self.p1.has_sold_computer_this_turn = False
+                            self.p1.has_traded_this_turn = False
                             self.p1.items_bought_this_turn = 0
                             self.p1.guesses_done_this_turn = 0
                             if self.p1.jailed:
                                 self.dice_roll()
-                                if sum(self.dice_rolls) < 6:  # if jailed, roll a break-free dice, if less than 6 he does not break free
+                                if sum(self.dice_rolls) < self.min_break_free_roll:  # if jailed, roll a break-free dice, if less than 6 he does not break free
                                     self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}, didn't break free", (0, 0, 0))
                                 else:
                                     self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}, broke free", (0, 0, 0))
@@ -264,6 +284,7 @@ class Game:
                             self.p2.has_done_event_this_turn = False
                             self.p2.has_done_famous_this_turn = False
                             self.p2.has_sold_computer_this_turn = False
+                            self.p2.has_traded_this_turn = False
                             self.p2.items_bought_this_turn = 0
                             self.p2.guesses_done_this_turn = 0
                             if self.p2.jailed:
@@ -278,40 +299,41 @@ class Game:
                                 self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}", self.p2_color)
                             self.next_round_stage()
                         break
-                    elif event.key == pg.K_1:
-                        self.p1.position = (self.p1.position + 1) % 36
-                        break
-                    elif event.key == pg.K_2:
-                        self.p2.position = (self.p2.position + 1) % 36
-                        break
-                    elif event.key == pg.K_b:
-                        if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position == 9 or self.p1.position == 27:
+                    elif event.key == pg.K_s and not self.winner:
+                        if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position in [9, 27]:
                             self.state_stack.append("SHOP")
                             self.shop(1)
-                        elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position == 9 or self.p2.position == 27:
+                        elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [9, 27]:
                             self.state_stack.append("SHOP")
                             self.shop(2)
-                    elif event.key == pg.K_q:
+                    elif event.key == pg.K_q and not self.winner:
                         if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position in [5, 14, 23, 32] and not self.p1.has_done_query_this_turn:
                             self.state_stack.append("QUERY")
                             self.query(1)
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [5, 14, 23, 32] and not self.p2.has_done_query_this_turn:
                             self.state_stack.append("QUERY")
                             self.query(2)
-                    elif event.key == pg.K_e:
+                    elif event.key == pg.K_e and not self.winner:
                         if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position in [2, 20] and not self.p1.has_done_event_this_turn:
                             self.state_stack.append("EVENT")
                             self.event(1)
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [2, 20] and not self.p2.has_done_event_this_turn:
                             self.state_stack.append("EVENT")
                             self.event(2)
-                    elif event.key == pg.K_f:
+                    elif event.key == pg.K_f and not self.winner:
                         if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position in [7, 25] and not self.p1.has_done_famous_this_turn:
                             self.state_stack.append("FAMOUS")
                             self.famous(1)
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position in [7, 25] and not self.p2.has_done_famous_this_turn:
                             self.state_stack.append("FAMOUS")
                             self.famous(2)
+                    elif event.key == pg.K_t and not self.winner:
+                        if self.round_stages[self.current_round_stage] == "P1_WAIT_FOR_ROLL" and self.p1.position == self.p2.position and not self.p1.has_traded_this_turn:
+                            self.state_stack.append("TRADE")
+                            self.trade(1)
+                        elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position == self.p1.position and not self.p2.has_traded_this_turn:
+                            self.state_stack.append("TRADE")
+                            self.trade(2)
 
             # Update
 
@@ -346,24 +368,38 @@ class Game:
 
             # Render the message log
             for i in range(len(self.log)):
-                self.screen.blit(self.log[i], self.log[i].get_rect(topleft=(600, (i * 50) + 75)))
+                self.screen.blit(self.log[i], self.log[i].get_rect(topleft=(575, (i * 50) + 75)))
 
-            if self.round_stages[self.current_round_stage] == "P1_ANNOUNCE_ROLL":
+            if self.round_stages[self.current_round_stage] == "P1_ANNOUNCE_ROLL" and not self.winner:
                 if self.p1.jailed:
                     self.add_to_log("P1 is jailed, press space to attempt breakout", self.p1_color)
                 else:
                     if self.p1.position in [9, 27]:
-                        self.add_to_log("P1, press space to roll dice, B to shop", self.p1_color)
+                        if self.p1.position == self.p2.position and not self.p1.has_traded_this_turn:
+                            self.add_to_log("P1, press space to roll dice, S to Shop, T to Trade", self.p1_color)
+                        else:
+                            self.add_to_log("P1, press space to roll dice, S to Shop", self.p1_color)
                     elif self.p1.position in [5, 14, 23, 32]:
-                        self.add_to_log("P1, press space to roll dice, Q for query", self.p1_color)
+                        if self.p1.position == self.p2.position and not self.p1.has_traded_this_turn:
+                            self.add_to_log("P1, press space to roll dice, Q for Query, T to Trade", self.p1_color)
+                        else:
+                            self.add_to_log("P1, press space to roll dice, Q for Query", self.p1_color)
                     elif self.p1.position in [2, 20]:
-                        self.add_to_log("P1, press space to roll dice, E for event", self.p1_color)
+                        if self.p1.position == self.p2.position and not self.p1.has_traded_this_turn:
+                            self.add_to_log("P1, press space to roll dice, E for Event, T to Trade", self.p1_color)
+                        else:
+                            self.add_to_log("P1, press space to roll dice, E for Event", self.p1_color)
                     elif self.p1.position in [7, 25]:
-                        self.add_to_log("P1, press space to roll dice, F for famous", self.p1_color)
+                        if self.p1.position == self.p2.position and not self.p1.has_traded_this_turn:
+                            self.add_to_log("P1, press space to roll dice, F for Famous, T to Trade", self.p1_color)
+                        else:
+                            self.add_to_log("P1, press space to roll dice, F for Famous", self.p1_color)
+                    elif self.p1.position == self.p2.position and not self.p1.has_traded_this_turn:
+                        self.add_to_log("P1, press space to roll dice, T to Trade", self.p1_color)
                     else:
                         self.add_to_log("P1, press space to roll dice", self.p1_color)
                 self.next_round_stage()
-            elif self.round_stages[self.current_round_stage] == "P1_MOVE":
+            elif self.round_stages[self.current_round_stage] == "P1_MOVE" and not self.winner:
                 if not self.p1.jailed:
                     # Move the player
                     self.p1.position = (self.p1.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
@@ -373,7 +409,7 @@ class Game:
                 elif self.p1.position == 19:
                     self.p1.jailed = False
                 self.next_round_stage()
-            elif self.round_stages[self.current_round_stage] == "P1_ACTION":
+            elif self.round_stages[self.current_round_stage] == "P1_ACTION" and not self.winner:
                 # self.add_to_log(f"P1 is on tile: {self.p1.position}", self.p1_color)
                 if self.p1.position == 18:  # if p1 landed on jail tile
                     self.p1.jailed = True
@@ -384,39 +420,53 @@ class Game:
                     self.p1.components[item] += 1
                     # prints out the component list, maybe needed for debugging
                     # print(f"P1: {self.p1.components}")
-                elif self.p1.position == 11 or self.p1.position == 29:  # chance tile
+                elif self.p1.position in [11, 29]:  # chance tile
                     self.chance(1)
-                elif self.p1.position == 2 or self.p1.position == 20:  # Event tile
-                    self.add_to_log(f"P1 landed on a Event tile", self.color_green)
-                elif self.p1.position == 7 or self.p1.position == 25:  # Famous person tile
-                    self.add_to_log(f"P1 landed on a Famous person tile", self.color_gray)
-                elif self.p1.position == 5 or self.p1.position == 14 or self.p1.position == 23 or self.p1.position == 32:  # Query tile
+                elif self.p1.position in [2, 20]:  # Event tile
+                    self.add_to_log(f"P1 landed on an Event tile", self.color_green)
+                elif self.p1.position in [7, 25]:  # Famous person tile
+                    self.add_to_log(f"P1 landed on a Famous Person tile", self.color_gray)
+                elif self.p1.position in [5, 14, 23, 32]:  # Query tile
                     self.add_to_log(f"P1 landed on a Query tile", self.color_blue)
-                elif self.p1.position == 9 or self.p1.position == 27:  # Shop tile
+                elif self.p1.position in [9, 27]:  # Shop tile
                     self.add_to_log(f"P1 landed on a Shop tile", self.color_red)
                 elif self.p1.position == 0:  # Start tile
                     reward = random.randint(self.back_at_start_reward[0], self.back_at_start_reward[1])
-                    self.add_to_log(f"P1 is back at start, +${reward}", self.color_yellow)
+                    self.add_to_log(f"P1 is back at Start, +${reward}", self.color_yellow)
                     self.p1.money += reward
                     self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
 
                 self.next_round_stage()
-            elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL":
+            elif self.round_stages[self.current_round_stage] == "P2_ANNOUNCE_ROLL" and not self.winner:
                 if self.p2.jailed:
                     self.add_to_log("P2 is jailed, press space to attempt breakout", self.p2_color)
                 else:
                     if self.p2.position in [9, 27]:
-                        self.add_to_log("P2, press space to roll dice, B to shop", self.p2_color)
+                        if self.p2.position == self.p1.position and not self.p2.has_traded_this_turn:
+                            self.add_to_log("P2, press space to roll dice, S to Shop, T to Trade", self.p2_color)
+                        else:
+                            self.add_to_log("P2, press space to roll dice, S to Shop", self.p2_color)
                     elif self.p2.position in [5, 14, 23, 32]:
-                        self.add_to_log("P2, press space to roll dice, Q for query", self.p2_color)
+                        if self.p2.position == self.p1.position and not self.p2.has_traded_this_turn:
+                            self.add_to_log("P2, press space to roll dice, Q for Query, T to Trade", self.p2_color)
+                        else:
+                            self.add_to_log("P2, press space to roll dice, Q for Query", self.p2_color)
                     elif self.p2.position in [2, 20]:
-                        self.add_to_log("P2, press space to roll dice, E for event", self.p2_color)
+                        if self.p2.position == self.p1.position and not self.p2.has_traded_this_turn:
+                            self.add_to_log("P2, press space to roll dice, E for Event, T to Trade", self.p2_color)
+                        else:
+                            self.add_to_log("P2, press space to roll dice, E for Event", self.p2_color)
                     elif self.p2.position in [7, 25]:
-                        self.add_to_log("P2, press space to roll dice, F for famous", self.p2_color)
+                        if self.p2.position == self.p1.position and not self.p2.has_traded_this_turn:
+                            self.add_to_log("P2, press space to roll dice, F for Famous, T to Trade", self.p2_color)
+                        else:
+                            self.add_to_log("P2, press space to roll dice, F for Famous", self.p2_color)
+                    elif self.p2.position == self.p1.position and not self.p2.has_traded_this_turn:
+                        self.add_to_log("P2, press space to roll dice, T to Trade", self.p2_color)
                     else:
                         self.add_to_log("P2, press space to roll dice", self.p2_color)
                 self.next_round_stage()
-            elif self.round_stages[self.current_round_stage] == "P2_MOVE":
+            elif self.round_stages[self.current_round_stage] == "P2_MOVE" and not self.winner:
                 if not self.p2.jailed:
                     # Move the player
                     self.p2.position = (self.p2.position + (self.dice_rolls[0] + self.dice_rolls[1])) % 36
@@ -426,7 +476,7 @@ class Game:
                 elif self.p2.position == 19:
                     self.p2.jailed = False
                 self.next_round_stage()
-            elif self.round_stages[self.current_round_stage] == "P2_ACTION":
+            elif self.round_stages[self.current_round_stage] == "P2_ACTION" and not self.winner:
                 # self.add_to_log(f"P2 is on tile: {self.p2.position}", self.p2_color)
                 if self.p2.position == 18:  # if p2 landed on jail tile
                     self.p2.jailed = True
@@ -437,19 +487,19 @@ class Game:
                     self.p2.components[item] += 1
                     # prints out component list, maybe needed for debugging
                     # print(f"P2: {self.p2.components}")
-                elif self.p2.position == 11 or self.p2.position == 29:  # chance tile
+                elif self.p2.position in [11, 29]:  # chance tile
                     self.chance(2)
-                elif self.p2.position == 2 or self.p2.position == 20:  # Event tile
-                    self.add_to_log(f"P2 landed on a Event tile", self.color_green)
-                elif self.p2.position == 7 or self.p2.position == 25:  # Famous person tile
-                    self.add_to_log(f"P2 landed on a Famous person tile", self.color_gray)
-                elif self.p2.position == 5 or self.p2.position == 14 or self.p2.position == 23 or self.p2.position == 32:  # Query tile
+                elif self.p2.position in [2, 20]:  # Event tile
+                    self.add_to_log(f"P2 landed on an Event tile", self.color_green)
+                elif self.p2.position in [7, 25]:  # Famous person tile
+                    self.add_to_log(f"P2 landed on a Famous Person tile", self.color_gray)
+                elif self.p2.position in [5, 14, 23, 32]:  # Query tile
                     self.add_to_log(f"P2 landed on a Query tile", self.color_blue)
-                elif self.p2.position == 9 or self.p2.position == 27:  # Shop tile
+                elif self.p2.position in [9, 27]:  # Shop tile
                     self.add_to_log(f"P2 landed on a Shop tile", self.color_red)
                 elif self.p2.position == 0:  # Start tile
                     reward = random.randint(self.back_at_start_reward[0], self.back_at_start_reward[1])
-                    self.add_to_log(f"P2 is back at start, +${reward}", self.color_yellow)
+                    self.add_to_log(f"P2 is back at Start, +${reward}", self.color_yellow)
                     self.p2.money += reward
                     self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
 
@@ -485,8 +535,7 @@ class Game:
         else:
             item = 8
         gain = random.randint(self.chances[item][0], self.chances[item][1])
-        relatives = ["mom's", "dad's", "grandma's", "grandpa's"]
-        # injury = ["broken leg", "broken arm", "broken foot", "broken hand"]
+        relatives = ["mom", "dad", "grandma", "grandpa"]
         food = ["lunch", "breakfast", "dinner"]
         if player == 1:
             if item == 0:
@@ -522,7 +571,7 @@ class Game:
                     self.add_to_log(f"P1 went all in, -{abs(gain)}", self.color_purple)
             elif item == 9:
                 if self.p1.money == 0:
-                    self.add_to_log(f"P1 has no money for {random.choice(relatives)} bill", self.color_purple)
+                    self.add_to_log(f"P1 has no money for {random.choice(relatives)}'s hospital bill", self.color_purple)
                 else:
                     self.add_to_log(f"P1's {random.choice(relatives)}, is in the hospital, -{abs(gain)}", self.color_purple)
         else:
@@ -559,7 +608,7 @@ class Game:
                     self.add_to_log(f"P2 went all in, -{abs(gain)}", self.color_purple)
             elif item == 9:
                 if self.p2.money == 0:
-                    self.add_to_log(f"P2 has no money for {random.choice(relatives)} bill", self.color_purple)
+                    self.add_to_log(f"P2 has no money for {random.choice(relatives)}'s hospital bill", self.color_purple)
                 else:
                     self.add_to_log(f"P2's {random.choice(relatives)}, is in the hospital, -{abs(gain)}", self.color_purple)
         if player == 1:
@@ -615,7 +664,7 @@ class Game:
             self.left_to_buy_text = self.font_50.render(f"Left to buy this turn: {int((len(self.p2.components) / 2) - self.p2.items_bought_this_turn)}", False, "White").convert()
 
         def buy_item(index):
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 if player == 1 and self.p1.money >= values[index]:
                     self.p1.items_bought_this_turn += 1
                     self.left_to_buy_text = self.font_50.render(f"Left to buy this turn: {int((len(self.p1.components) / 2) - self.p1.items_bought_this_turn)}", False, "White").convert()
@@ -763,7 +812,7 @@ class Game:
                 self.screen.blit(text, (700, 105 + (i * 70)))
 
             # Buy buttons
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[0])
                 if buy_buttons[0].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -771,7 +820,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[0].centerx, buy_buttons[0].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[1])
                 if buy_buttons[1].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -779,7 +828,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[1].centerx, buy_buttons[1].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[2])
                 if buy_buttons[2].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -787,7 +836,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[2].centerx, buy_buttons[2].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[3])
                 if buy_buttons[3].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -795,7 +844,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[3].centerx, buy_buttons[3].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[4])
                 if buy_buttons[4].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -803,7 +852,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[4].centerx, buy_buttons[4].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[5])
                 if buy_buttons[5].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -811,7 +860,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[5].centerx, buy_buttons[5].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[6])
                 if buy_buttons[6].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -819,7 +868,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[6].centerx, buy_buttons[6].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[7])
                 if buy_buttons[7].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -827,7 +876,7 @@ class Game:
                     buy_text = self.font_50.render("Buy", False, self.color_purple).convert()
                 self.screen.blit(buy_text, buy_text.get_rect(center=(buy_buttons[7].centerx, buy_buttons[7].centery + 5)))
 
-            if (player == 1 and self.p1.items_bought_this_turn < len(self.p1.components) / 2) or (player == 2 and self.p2.items_bought_this_turn < len(self.p2.components) / 2):
+            if (player == 1 and self.p1.items_bought_this_turn < self.max_buy_per_round) or (player == 2 and self.p2.items_bought_this_turn < self.max_buy_per_round):
                 pg.draw.rect(self.screen, self.color_green, buy_buttons[8])
                 if buy_buttons[8].collidepoint(pg.mouse.get_pos()):
                     buy_text = self.font_50.render("Buy", False, self.color_yellow).convert()
@@ -918,7 +967,7 @@ class Game:
             choices_texts.append(self.font_40.render(choice, False, "Black").convert())
 
         correct_answer = answers[random_num]
-        # for debuggen, if the answers dont match up
+        # for debugging, if the answers don't match up
         # print(correct_answer)
 
         answer_buttons = [pg.Rect(((self.window_width / 4) - 50, 400), (100, 100)), pg.Rect(((self.window_width / 2) - 50, 400), (100, 100)), pg.Rect((((self.window_width / 4) * 3) - 50, 400), (100, 100))]
@@ -1283,7 +1332,6 @@ class Game:
                                 else:  # Wrong answer chosen
                                     self.add_to_log("P2 chose the wrong answer", self.color_gray)
 
-
                         self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
                         self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
                         self.state_stack.pop()
@@ -1339,3 +1387,93 @@ class Game:
             # PyGame Render
             pg.display.update()
             self.clock.tick(self.fps)
+
+    def trade(self, player):
+        # TODO Change has_traded_this_turn for player when trade is complete
+        return_button = pg.Rect((1000, 590), (250, 100))
+        while self.state_stack[-1] == "TRADE":
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    exit(0)
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    if return_button.collidepoint(pg.mouse.get_pos()):
+                        if player == 1:
+                            self.add_to_log("P1 has completed a trade.", self.p1_color)
+                            self.p1.has_traded_this_turn = True
+                        else:
+                            self.add_to_log("P2 has completed a trade", self.p2_color)
+                            self.p2.has_traded_this_turn = True
+                        # Go back to previous state
+                        self.state_stack.pop()
+                        break
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        # Go back to previous state
+                        if player == 1:
+                            self.add_to_log("P1 has completed a trade.", self.p1_color)
+                            self.p1.has_traded_this_turn = True
+                        else:
+                            self.add_to_log("P2 has completed a trade", self.p2_color)
+                            self.p2.has_traded_this_turn = True
+                        self.state_stack.pop()
+                        break
+
+            # Update
+
+            # Render
+
+            self.screen.fill(self.bg_color)
+            # Return button
+            pg.draw.rect(self.screen, self.color_green, return_button)
+            if return_button.collidepoint(pg.mouse.get_pos()):
+                return_text = self.font_100.render("Return", False, self.color_blue).convert()
+            else:
+                return_text = self.font_100.render("Return", False, self.color_brown).convert()
+            self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
+
+            # PyGame Render
+            pg.display.update()
+            self.clock.tick(self.fps)
+
+    def check_for_winner(self):
+        if self.p1.money > self.win_condition:
+            self.winner = 1
+        elif self.p2.money > self.win_condition:
+            self.winner = 2
+        # else winner stays 0
+
+    def restart(self):
+        self.winner = 0
+        self.current_round_stage = 0
+        self.log = []
+        self.add_to_log(f"Welcome to TUBOGA. First player to ${self.win_condition} wins!", "White")
+        self.add_to_log(f"This is the log, the most recent {self.max_log_size} events are shown here.", "White")
+        self.p1.position = 0
+        self.p2.position = 0
+        self.p1.money = 500
+        self.p2.money = 500
+        self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
+        self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
+        self.p1.jailed = False
+        self.p2.jailed = False
+        components = list(self.p1.components)
+        for component in components:
+            self.p1.components[component] = 0
+            self.p2.components[component] = 0
+        self.p1.has_done_query_this_turn = False
+        self.p2.has_done_query_this_turn = False
+        self.p1.has_done_event_this_turn = False
+        self.p2.has_done_event_this_turn = False
+        self.p1.has_done_famous_this_turn = False
+        self.p2.has_done_famous_this_turn = False
+        self.p1.has_sold_computer_this_turn = False
+        self.p2.has_sold_computer_this_turn = False
+        self.p1.has_traded_this_turn = False
+        self.p2.has_traded_this_turn = False
+        self.p1.items_bought_this_turn = 0
+        self.p2.items_bought_this_turn = 0
+        self.p1.guesses_done_this_turn = 0
+        self.p2.guesses_done_this_turn = 0
+        self.p1.can_sell_computer = False
+        self.p2.can_sell_computer = False
