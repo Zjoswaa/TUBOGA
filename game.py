@@ -382,17 +382,18 @@ class Game:
                     item = random.choice(list(self.p1.components.keys()))
                     self.add_to_log(f"P1 got: {item}", self.color_brown)
                     self.p1.components[item] += 1
-                    print(f"P1: {self.p1.components}")
+                    # prints out the component list, maybe needed for debugging
+                    # print(f"P1: {self.p1.components}")
                 elif self.p1.position == 11 or self.p1.position == 29:  # chance tile
                     self.chance(1)
                 elif self.p1.position == 2 or self.p1.position == 20:  # Event tile
-                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_green)
+                    self.add_to_log(f"P1 landed on a Event tile", self.color_green)
                 elif self.p1.position == 7 or self.p1.position == 25:  # Famous person tile
-                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_gray)
+                    self.add_to_log(f"P1 landed on a Famous person tile", self.color_gray)
                 elif self.p1.position == 5 or self.p1.position == 14 or self.p1.position == 23 or self.p1.position == 32:  # Query tile
-                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_blue)
+                    self.add_to_log(f"P1 landed on a Query tile", self.color_blue)
                 elif self.p1.position == 9 or self.p1.position == 27:  # Shop tile
-                    self.add_to_log(f"P1 is on tile: {self.p1.position}", self.color_red)
+                    self.add_to_log(f"P1 landed on a Shop tile", self.color_red)
                 elif self.p1.position == 0:  # Start tile
                     reward = random.randint(self.back_at_start_reward[0], self.back_at_start_reward[1])
                     self.add_to_log(f"P1 is back at start, +${reward}", self.color_yellow)
@@ -434,17 +435,18 @@ class Game:
                     item = random.choice(list(self.p2.components.keys()))
                     self.add_to_log(f"P2 got: {item}", self.color_brown)
                     self.p2.components[item] += 1
-                    print(f"P2: {self.p2.components}")
+                    # prints out component list, maybe needed for debugging
+                    # print(f"P2: {self.p2.components}")
                 elif self.p2.position == 11 or self.p2.position == 29:  # chance tile
                     self.chance(2)
                 elif self.p2.position == 2 or self.p2.position == 20:  # Event tile
-                    self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_green)
+                    self.add_to_log(f"P2 landed on a Event tile", self.color_green)
                 elif self.p2.position == 7 or self.p2.position == 25:  # Famous person tile
-                    self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_gray)
+                    self.add_to_log(f"P2 landed on a Famous person tile", self.color_gray)
                 elif self.p2.position == 5 or self.p2.position == 14 or self.p2.position == 23 or self.p2.position == 32:  # Query tile
-                    self.add_to_log(f"P2 is on tile: {self.p2.position}", self.color_blue)
+                    self.add_to_log(f"P2 landed on a Query tile", self.color_blue)
                 elif self.p2.position == 9 or self.p2.position == 27:  # Shop tile
-                    self.add_to_log(f"P2 is on tile: {self.p1.position}", self.color_red)
+                    self.add_to_log(f"P2 landed on a Shop tile", self.color_red)
                 elif self.p2.position == 0:  # Start tile
                     reward = random.randint(self.back_at_start_reward[0], self.back_at_start_reward[1])
                     self.add_to_log(f"P2 is back at start, +${reward}", self.color_yellow)
@@ -916,7 +918,8 @@ class Game:
             choices_texts.append(self.font_40.render(choice, False, "Black").convert())
 
         correct_answer = answers[random_num]
-        print(correct_answer)
+        # for debuggen, if the answers dont match up
+        # print(correct_answer)
 
         answer_buttons = [pg.Rect(((self.window_width / 4) - 50, 400), (100, 100)), pg.Rect(((self.window_width / 2) - 50, 400), (100, 100)), pg.Rect((((self.window_width / 4) * 3) - 50, 400), (100, 100))]
         answer_button_texts = [self.font_100.render("A", False, "Black").convert(), self.font_100.render("B", False, "Black").convert(), self.font_100.render("C", False, "Black").convert()]
@@ -1052,7 +1055,8 @@ class Game:
             while char in self.event_answer:
                 char = str(random.randint(1, 6))
             self.event_answer += char
-        print(f"Answer: {self.event_answer}")
+        # for debuggen if something goes wrong with the answers, this gives the answer
+        # print(f"Answer: {self.event_answer}")
         user_text = ""
         user_text_display = self.font_50.render(user_text, False, (50, 255, 0))
 
@@ -1118,7 +1122,8 @@ class Game:
                                 self.guesses_left_text = self.font_50.render(f"Guesses left: {self.max_event_guesses - self.p2.guesses_done_this_turn}", False, "Black").convert()
                             correct = 0
                             in_word = 0
-                            print(user_text)
+                            # prints out the user input
+                            # print(user_text)
                             for i in range(4):
                                 if user_text[i] == self.event_answer[i]:
                                     correct += 1
@@ -1189,7 +1194,8 @@ class Game:
             choices_texts.append(self.font_40.render(choice, False, "Black").convert())
 
         correct_answer = famous_answers[random_num]
-        print(correct_answer)
+        # prints out the correct answer, if needed for debugging
+        # print(correct_answer)
 
         answer_buttons = [pg.Rect((280, 400), (100, 100)), pg.Rect((480, 400), (100, 100)), pg.Rect((680, 400), (100, 100)), pg.Rect(((880, 400), (100, 100)))]
         answer_button_texts = [self.font_100.render("A", False, "Black").convert(), self.font_100.render("B", False, "Black").convert(), self.font_100.render("C", False, "Black").convert(), self.font_100.render("B", False, "Black").convert()]
@@ -1259,7 +1265,7 @@ class Game:
                                 else:  # Wrong answer chosen
                                     self.add_to_log("P2 chose the wrong answer", self.color_gray)
                                     
-                        if answer_buttons[2].collidepoint(pg.mouse.get_pos()):  # Player chose D
+                        if answer_buttons[3].collidepoint(pg.mouse.get_pos()):  # Player chose D
                             if player == 1:
                                 self.p1.has_done_famous_this_turn = True
                                 if correct_answer == 3:  # Correct answer chosen
