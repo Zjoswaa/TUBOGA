@@ -1407,14 +1407,11 @@ class Game:
             self.clock.tick(self.fps)
 
     def trade(self, player):
-        # alle money componenten goed checken
-        # TODO Change has_traded_this_turn for player when trade is complete
         return_button = pg.Rect((1000, 590), (250, 100))
         trade_button = pg.Rect((515, 590), (250, 100))
 
         add_buttons = [pg.Rect((70, 35), (70, 35)), pg.Rect((70, 95), (70, 35)), pg.Rect((70, 155), (70, 35)), pg.Rect((70, 215), (70, 35)), pg.Rect((70, 275), (70, 35)), pg.Rect((70, 335), (70, 35)), pg.Rect((70, 395), (70, 35)), pg.Rect((70, 455), (70, 35)), pg.Rect((70, 515), (70, 35)), pg.Rect((710, 35), (70, 35)), pg.Rect((710, 95), (70, 35)), pg.Rect((710, 155), (70, 35)), pg.Rect((710, 215), (70, 35)), pg.Rect((710, 275), (70, 35)), pg.Rect((710, 335), (70, 35)), pg.Rect((710, 395), (70, 35)), pg.Rect((710, 455), (70, 35)), pg.Rect((710, 515), (70, 35))]
         remove_buttons = [pg.Rect((150, 35), (120, 35)), pg.Rect((150, 95), (120, 35)), pg.Rect((150, 155), (120, 35)), pg.Rect((150, 215), (120, 35)), pg.Rect((150, 275), (120, 35)), pg.Rect((150, 335), (120, 35)), pg.Rect((150, 395), (120, 35)), pg.Rect((150, 455), (120, 35)), pg.Rect((150, 515), (120, 35)), pg.Rect((790, 35), (120, 35)), pg.Rect((790, 95), (120, 35)), pg.Rect((790, 155), (120, 35)), pg.Rect((790, 215), (120, 35)), pg.Rect((790, 275), (120, 35)), pg.Rect((790, 335), (120, 35)), pg.Rect((790, 395), (120, 35)), pg.Rect((790, 455), (120, 35)), pg.Rect((790, 515), (120, 35))]
-        # items = {"Keyboard": 100, "Mouse": 100, "Monitor": 100, "Printer": 100, "CPU": 100, "GPU": 100, "Motherboard": 100, "Mini Tower": 100, "Harddrive": 100}
         items = ["Keyboard", "Mouse", "Monitor", "Printer", "CPU", "GPU", "Motherboard", "Mini Tower", "Harddrive"]
 
         def add_item(index):
