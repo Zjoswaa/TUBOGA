@@ -5,10 +5,6 @@ from player import Player
 from questions import *
 from famousperson import *
 
-print(len(questions))
-print(len(choices))
-print(len(answers))
-
 
 class Game:
     def __init__(self, width, height, title):
