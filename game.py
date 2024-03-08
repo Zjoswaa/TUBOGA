@@ -269,6 +269,7 @@ class Game:
                             self.p1.has_traded_this_turn = False
                             self.p1.items_bought_this_turn = 0
                             self.p1.guesses_done_this_turn = 0
+                            self.reset_components_trade(1)
                             if self.p1.jailed:
                                 self.dice_roll()
                                 if sum(self.dice_rolls) < self.min_break_free_roll:  # if jailed, roll a break-free dice, if less than 6 he does not break free
@@ -288,6 +289,7 @@ class Game:
                             self.p2.has_traded_this_turn = False
                             self.p2.items_bought_this_turn = 0
                             self.p2.guesses_done_this_turn = 0
+                            self.reset_components_trade(2)
                             if self.p2.jailed:
                                 self.dice_roll()
                                 if sum(self.dice_rolls) < self.min_break_free_roll:  # if jailed, roll a break-free dice, if less than 6 he does not break free
@@ -335,6 +337,9 @@ class Game:
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL" and self.p2.position == self.p1.position and not self.p2.has_traded_this_turn:
                             self.state_stack.append("TRADE")
                             self.trade(2)
+                    # TODO: Remove
+                    elif event.key == pg.K_p:
+                        print(f"P1: {self.p1.components}\nP1 (trade): {self.p1.components_trade}\nP2: {self.p2.components}\nP2 (trade): {self.p2.components_trade}")
 
             # Update
 
@@ -1164,12 +1169,12 @@ class Game:
                         if user_text == self.event_answer:
                             reward = random.randint(self.event_reward[0], self.event_reward[1])
                             if player == 1:
-                                self.add_to_log(f"P1 guessed the number, +${reward}", self.color_green)
+                                self.add_to_log(f"P1 guessed the number, it was: {self.event_answer} +${reward}", self.color_green)
                                 self.p1.money += reward
                                 self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
                                 self.p1.has_done_event_this_turn = True
                             else:
-                                self.add_to_log(f"P2 guessed the number +${reward}", self.color_green)
+                                self.add_to_log(f"P2 guessed the number, it was: {self.event_answer} +${reward}", self.color_green)
                                 self.p2.money += reward
                                 self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
                                 self.p2.has_done_event_this_turn = True
@@ -1189,7 +1194,7 @@ class Game:
                             for i in range(4):
                                 if user_text[i] == self.event_answer[i]:
                                     correct += 1
-                                elif user_text[i] in self.event_answer:
+                                if user_text[i] in self.event_answer:
                                     in_word += 1
                             self.nums_in_word_text = self.font_50.render(f"Number that are in the word: {in_word}", False, "Black").convert()
                             self.nums_correct_text = self.font_50.render(f"Numbers in the correct spot: {correct}", False, "Black").convert()
@@ -1239,7 +1244,7 @@ class Game:
             # PyGame Render
             pg.display.update()
             self.clock.tick(self.fps)
-            
+
 
     def famous(self, player):
         return_button = pg.Rect((1000, 590), (250, 100))
@@ -1326,7 +1331,7 @@ class Game:
                                     self.add_to_log(f"P2 chose the correct answer, +${reward}", self.color_gray)
                                 else:  # Wrong answer chosen
                                     self.add_to_log("P2 chose the wrong answer", self.color_gray)
-                                    
+
                         if answer_buttons[3].collidepoint(pg.mouse.get_pos()):  # Player chose D
                             if player == 1:
                                 self.p1.has_done_famous_this_turn = True
@@ -1405,43 +1410,28 @@ class Game:
         # alle money componenten goed checken
         # TODO Change has_traded_this_turn for player when trade is complete
         return_button = pg.Rect((1000, 590), (250, 100))
-        trade_button = pg.Rect((515,590), (250, 100))
+        trade_button = pg.Rect((515, 590), (250, 100))
 
-        add_buttons = [pg.Rect((70, 35), (70, 35)), pg.Rect((70, 95), (70, 35)), pg.Rect((70, 155), (70, 35)), pg.Rect((70, 215), (70, 35)), pg.Rect((70, 275), (70, 35)), pg.Rect((70, 335), (70, 35)),
-                        pg.Rect((70, 395), (70, 35)), pg.Rect((70, 455), (70, 35)), pg.Rect((70, 515), (70, 35)),
-                        pg.Rect((710, 35), (70, 35)), pg.Rect((710, 95), (70, 35)), pg.Rect((710, 155), (70, 35)), pg.Rect((710, 215), (70, 35)), pg.Rect((710, 275), (70, 35)), pg.Rect((710, 335), (70, 35)),
-                        pg.Rect((710, 395), (70, 35)), pg.Rect((710, 455), (70, 35)), pg.Rect((710, 515), (70, 35))]
-        remove_buttons = [pg.Rect((150, 35), (120, 35)), pg.Rect((150, 95), (120, 35)), pg.Rect((150, 155), (120, 35)), pg.Rect((150, 215), (120, 35)), pg.Rect((150, 275), (120, 35)), pg.Rect((150, 335), (120, 35)),
-                        pg.Rect((150, 395), (120, 35)), pg.Rect((150, 455), (120, 35)), pg.Rect((150, 515), (120, 35)),
-                        pg.Rect((790, 35), (120, 35)), pg.Rect((790, 95), (120, 35)), pg.Rect((790, 155), (120, 35)), pg.Rect((790, 215), (120, 35)), pg.Rect((790, 275), (120, 35)), pg.Rect((790, 335), (120, 35)),
-                        pg.Rect((790, 395), (120, 35)), pg.Rect((790, 455), (120, 35)), pg.Rect((790, 515), (120, 35))]
-        items = {"Keyboard": 100, "Mouse": 100, "Monitor": 100, "Printer": 100, "CPU": 100, "GPU": 100, "Motherboard": 100, "Mini Tower": 100, "Harddrive": 100}
-        keys = list(items.keys())
-        values = list(items.values())
+        add_buttons = [pg.Rect((70, 35), (70, 35)), pg.Rect((70, 95), (70, 35)), pg.Rect((70, 155), (70, 35)), pg.Rect((70, 215), (70, 35)), pg.Rect((70, 275), (70, 35)), pg.Rect((70, 335), (70, 35)), pg.Rect((70, 395), (70, 35)), pg.Rect((70, 455), (70, 35)), pg.Rect((70, 515), (70, 35)), pg.Rect((710, 35), (70, 35)), pg.Rect((710, 95), (70, 35)), pg.Rect((710, 155), (70, 35)), pg.Rect((710, 215), (70, 35)), pg.Rect((710, 275), (70, 35)), pg.Rect((710, 335), (70, 35)), pg.Rect((710, 395), (70, 35)), pg.Rect((710, 455), (70, 35)), pg.Rect((710, 515), (70, 35))]
+        remove_buttons = [pg.Rect((150, 35), (120, 35)), pg.Rect((150, 95), (120, 35)), pg.Rect((150, 155), (120, 35)), pg.Rect((150, 215), (120, 35)), pg.Rect((150, 275), (120, 35)), pg.Rect((150, 335), (120, 35)), pg.Rect((150, 395), (120, 35)), pg.Rect((150, 455), (120, 35)), pg.Rect((150, 515), (120, 35)), pg.Rect((790, 35), (120, 35)), pg.Rect((790, 95), (120, 35)), pg.Rect((790, 155), (120, 35)), pg.Rect((790, 215), (120, 35)), pg.Rect((790, 275), (120, 35)), pg.Rect((790, 335), (120, 35)), pg.Rect((790, 395), (120, 35)), pg.Rect((790, 455), (120, 35)), pg.Rect((790, 515), (120, 35))]
+        # items = {"Keyboard": 100, "Mouse": 100, "Monitor": 100, "Printer": 100, "CPU": 100, "GPU": 100, "Motherboard": 100, "Mini Tower": 100, "Harddrive": 100}
+        items = ["Keyboard", "Mouse", "Monitor", "Printer", "CPU", "GPU", "Motherboard", "Mini Tower", "Harddrive"]
 
         def add_item(index):
-            if self.p1.components[keys[index]] > 0 and (add_buttons[0].collidepoint(pg.mouse.get_pos()) or add_buttons[1].collidepoint(pg.mouse.get_pos()) or add_buttons[2].collidepoint(pg.mouse.get_pos())
-                                                        or add_buttons[3].collidepoint(pg.mouse.get_pos()) or add_buttons[4].collidepoint(pg.mouse.get_pos()) or add_buttons[5].collidepoint(pg.mouse.get_pos())
-                                                        or add_buttons[6].collidepoint(pg.mouse.get_pos()) or add_buttons[7].collidepoint(pg.mouse.get_pos()) or add_buttons[8].collidepoint(pg.mouse.get_pos())): 
-                self.p1.components_trade[keys[index]] += 1
-                self.p1.components[keys[index]] -= 1
-            elif self.p2.components[keys[index]] > 0 and (add_buttons[9].collidepoint(pg.mouse.get_pos()) or add_buttons[10].collidepoint(pg.mouse.get_pos()) or add_buttons[11].collidepoint(pg.mouse.get_pos())
-                                                            or add_buttons[12].collidepoint(pg.mouse.get_pos()) or add_buttons[13].collidepoint(pg.mouse.get_pos()) or add_buttons[14].collidepoint(pg.mouse.get_pos())
-                                                            or add_buttons[15].collidepoint(pg.mouse.get_pos()) or add_buttons[16].collidepoint(pg.mouse.get_pos()) or add_buttons[17].collidepoint(pg.mouse.get_pos())):
-                self.p2.components_trade[keys[index]] += 1
-                self.p2.components[keys[index]] -= 1
+            if self.p1.components[items[index]] > 0 and (add_buttons[0].collidepoint(pg.mouse.get_pos()) or add_buttons[1].collidepoint(pg.mouse.get_pos()) or add_buttons[2].collidepoint(pg.mouse.get_pos()) or add_buttons[3].collidepoint(pg.mouse.get_pos()) or add_buttons[4].collidepoint(pg.mouse.get_pos()) or add_buttons[5].collidepoint(pg.mouse.get_pos()) or add_buttons[6].collidepoint(pg.mouse.get_pos()) or add_buttons[7].collidepoint(pg.mouse.get_pos()) or add_buttons[8].collidepoint(pg.mouse.get_pos())):
+                self.p1.components_trade[items[index]] += 1
+                self.p1.components[items[index]] -= 1
+            elif self.p2.components[items[index]] > 0 and (add_buttons[9].collidepoint(pg.mouse.get_pos()) or add_buttons[10].collidepoint(pg.mouse.get_pos()) or add_buttons[11].collidepoint(pg.mouse.get_pos()) or add_buttons[12].collidepoint(pg.mouse.get_pos()) or add_buttons[13].collidepoint(pg.mouse.get_pos()) or add_buttons[14].collidepoint(pg.mouse.get_pos()) or add_buttons[15].collidepoint(pg.mouse.get_pos()) or add_buttons[16].collidepoint(pg.mouse.get_pos()) or add_buttons[17].collidepoint(pg.mouse.get_pos())):
+                self.p2.components_trade[items[index]] += 1
+                self.p2.components[items[index]] -= 1
 
         def remove_item(index):
-            if self.p1.components_trade[keys[index]] > 0 and (remove_buttons[0].collidepoint(pg.mouse.get_pos()) or remove_buttons[1].collidepoint(pg.mouse.get_pos()) or remove_buttons[2].collidepoint(pg.mouse.get_pos())
-                                                                or remove_buttons[3].collidepoint(pg.mouse.get_pos()) or remove_buttons[4].collidepoint(pg.mouse.get_pos()) or remove_buttons[5].collidepoint(pg.mouse.get_pos())
-                                                                or remove_buttons[6].collidepoint(pg.mouse.get_pos()) or remove_buttons[7].collidepoint(pg.mouse.get_pos()) or remove_buttons[8].collidepoint(pg.mouse.get_pos())):
-                self.p1.components_trade[keys[index]] -= 1
-                self.p1.components[keys[index]] += 1
-            elif self.p2.components_trade[keys[index]] > 0 and (remove_buttons[9].collidepoint(pg.mouse.get_pos()) or remove_buttons[10].collidepoint(pg.mouse.get_pos()) or remove_buttons[11].collidepoint(pg.mouse.get_pos())
-                                                                or remove_buttons[12].collidepoint(pg.mouse.get_pos()) or remove_buttons[13].collidepoint(pg.mouse.get_pos()) or remove_buttons[14].collidepoint(pg.mouse.get_pos())
-                                                                or remove_buttons[15].collidepoint(pg.mouse.get_pos()) or remove_buttons[16].collidepoint(pg.mouse.get_pos()) or remove_buttons[17].collidepoint(pg.mouse.get_pos())):
-                self.p2.components_trade[keys[index]] -= 1
-                self.p2.components[keys[index]] += 1
+            if self.p1.components_trade[items[index]] > 0 and (remove_buttons[0].collidepoint(pg.mouse.get_pos()) or remove_buttons[1].collidepoint(pg.mouse.get_pos()) or remove_buttons[2].collidepoint(pg.mouse.get_pos()) or remove_buttons[3].collidepoint(pg.mouse.get_pos()) or remove_buttons[4].collidepoint(pg.mouse.get_pos()) or remove_buttons[5].collidepoint(pg.mouse.get_pos()) or remove_buttons[6].collidepoint(pg.mouse.get_pos()) or remove_buttons[7].collidepoint(pg.mouse.get_pos()) or remove_buttons[8].collidepoint(pg.mouse.get_pos())):
+                self.p1.components_trade[items[index]] -= 1
+                self.p1.components[items[index]] += 1
+            elif self.p2.components_trade[items[index]] > 0 and (remove_buttons[9].collidepoint(pg.mouse.get_pos()) or remove_buttons[10].collidepoint(pg.mouse.get_pos()) or remove_buttons[11].collidepoint(pg.mouse.get_pos()) or remove_buttons[12].collidepoint(pg.mouse.get_pos()) or remove_buttons[13].collidepoint(pg.mouse.get_pos()) or remove_buttons[14].collidepoint(pg.mouse.get_pos()) or remove_buttons[15].collidepoint(pg.mouse.get_pos()) or remove_buttons[16].collidepoint(pg.mouse.get_pos()) or remove_buttons[17].collidepoint(pg.mouse.get_pos())):
+                self.p2.components_trade[items[index]] -= 1
+                self.p2.components[items[index]] += 1
 
         while self.state_stack[-1] == "TRADE":
             for event in pg.event.get():
@@ -1450,13 +1440,6 @@ class Game:
                     exit(0)
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     if return_button.collidepoint(pg.mouse.get_pos()):
-                        if player == 1:
-                            self.add_to_log("P1 has completed a trade.", self.p1_color)
-                            self.p1.has_traded_this_turn = True
-                        else:
-                            self.add_to_log("P2 has completed a trade", self.p2_color)
-                            self.p2.has_traded_this_turn = True
-                        # Go back to previous state
                         self.state_stack.pop()
                         break
                     elif add_buttons[0].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 1
@@ -1495,7 +1478,8 @@ class Game:
                         add_item(8)
                     elif remove_buttons[8].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 9
                         remove_item(8)
-                    # part 2 buttons on the right side of the screen
+
+                    # P2 buttons
                     elif add_buttons[9].collidepoint(pg.mouse.get_pos()):  # player wants to buy item 1
                         add_item(0)
                     elif remove_buttons[9].collidepoint(pg.mouse.get_pos()):  # player wants to sell item 1
@@ -1534,19 +1518,29 @@ class Game:
                         remove_item(8)
 
                     elif trade_button.collidepoint(pg.mouse.get_pos()):
-                        self.p1.components += self.p2.components_trade
-                        self.p2.components += self.p1.components_trade
-                        self.has_traded_this_turn = True
-                        
+                        # Add traded items from P1 to items P2
+                        for item in list(self.p1.components_trade.keys()):
+                            self.p2.components[item] += self.p1.components_trade[item]
+                        # Complete trade for P1 if at least 1 item was traded from any of the players
+                        if player == 1:
+                            if sum(self.p1.components_trade.values()) > 0 or sum(self.p2.components_trade.values()) > 0:
+                                self.add_to_log("P1 has completed a trade.", self.p1_color)
+                                self.reset_components_trade(1)
+                                self.p1.has_traded_this_turn = True
+                        # Add traded items from P2 to items P1
+                        for item in list(self.p2.components_trade.keys()):
+                            self.p1.components[item] += self.p2.components_trade[item]
+                        # Complete trade for P2 if at least 1 item was traded from any of the players
+                        if player == 2:
+                            if sum(self.p2.components_trade.values()) > 0 or sum(self.p1.components_trade.values()) > 0:
+                                self.add_to_log("P2 has completed a trade", self.p2_color)
+                                self.reset_components_trade(2)
+                                self.p2.has_traded_this_turn = True
+                        self.state_stack.pop()
+                        break
+
                 elif event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
-                        # Go back to previous state
-                        if player == 1:
-                            self.add_to_log("P1 has completed a trade.", self.p1_color)
-                            self.p1.has_traded_this_turn = True
-                        else:
-                            self.add_to_log("P2 has completed a trade", self.p2_color)
-                            self.p2.has_traded_this_turn = True
                         self.state_stack.pop()
                         break
 
@@ -1565,7 +1559,7 @@ class Game:
             else:
                 return_text = self.font_100.render("Return", False, self.color_brown).convert()
             self.screen.blit(return_text, return_text.get_rect(center=(return_button.centerx + 5, return_button.centery + 5)))
-            
+
             # Trade button
             pg.draw.rect(self.screen, self.color_green, trade_button)
             if trade_button.collidepoint(pg.mouse.get_pos()):
@@ -1576,7 +1570,7 @@ class Game:
 
             # Item placing 
             for i in range(len(items)):
-                item = list(items.keys())[i]
+                item = items[i]
                 # Item icon
                 self.screen.blit(self.component_icons_small[i], self.component_icons_small[i].get_rect(midleft=(20, 50 + (i * 60))))
                 self.screen.blit(self.component_icons_small[i], self.component_icons_small[i].get_rect(midleft=(660, 50 + (i * 60))))
@@ -1590,7 +1584,7 @@ class Game:
                 text_tradep2 = self.font_40.render(f"(P2 trade: {self.p2.components_trade[item]})", False, (0, 0, 0))
                 self.screen.blit(text_tradep1, (415, 45 + (i * 60)))
                 self.screen.blit(text_tradep2, (1055, 45 + (i * 60)))
-                
+
             # Buy buttons 
             pg.draw.rect(self.screen, self.color_green, add_buttons[0])
             if add_buttons[0].collidepoint(pg.mouse.get_pos()):
@@ -1858,6 +1852,14 @@ class Game:
             self.winner = 2
         # else winner stays 0
 
+    def reset_components_trade(self, player):
+        if player == 1:
+            for item in list(self.p1.components_trade.keys()):
+                self.p1.components_trade[item] = 0
+        else:
+            for item in list(self.p2.components_trade.keys()):
+                self.p2.components_trade[item] = 0
+
     def restart(self):
         self.winner = 0
         self.current_round_stage = 0
@@ -1872,10 +1874,12 @@ class Game:
         self.p2_money_text = self.font_40.render(f"${self.p2.money}", False, self.p2_color).convert()
         self.p1.jailed = False
         self.p2.jailed = False
-        components = list(self.p1.components)
+        components = list(self.p1.components.keys())
         for component in components:
             self.p1.components[component] = 0
             self.p2.components[component] = 0
+            self.p1.components_trade[component] = 0
+            self.p1.components_trade[component] = 0
         self.p1.has_done_query_this_turn = False
         self.p2.has_done_query_this_turn = False
         self.p1.has_done_event_this_turn = False
