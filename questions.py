@@ -19,7 +19,24 @@ questions = [
     "Which of the following data structures stores elements in key-value pairs?",
     "What does the 'len()' function in Python return?",
     "Which of the following is used to import a module in Python?",
-    "What does the 'append()' method do in Python lists?"
+    "What does the 'append()' method do in Python lists?",
+    "What is Python?",
+    "Which of the following statements is true about Python?",
+    "Which of the following is an immutable data type in Python?",
+    "What is the output of print(\"Python\"[1:4])?",
+    "What is the output of print(\"Python\".upper())?",
+    "What does the pass statement do in Python?",
+    "Which of the following is an incorrect variable name in Python?",
+    "What is the output of print(10 // 3)?",
+    "Which of the following is not a valid way to start a comment in Python?",
+    "What is the output of print(\"Python\".find(\"th\"))?",
+    "What does the continue statement do in Python?",
+    "What is the output of print(5 != 6)?",
+    "Which of the following is a valid way to create a dictionary in Python?",
+    "What is the output of print(\"python\".capitalize())?",
+    "How do you convert a string to a list in Python?",
+    "What does the % operator do in Python?",
+    "Which function is used to concatenate two lists in Python?"
 ]
 
 # Choices
@@ -43,9 +60,26 @@ choices = [
     ["A) List", "B) Dictionary", "C) Tuple"],
     ["A) The length of a string", "B) The number of elements in a list", "C) Both a and b"],
     ["A) require", "B) import", "C) include"],
-    ["A) Removes an element from the list", "B) Adds an element to the end of the list", "C) Sorts the list in ascending order"]
+    ["A) Removes an element from the list", "B) Adds an element to the end of the list", "C) Sorts the list in ascending order"],
+    ["A) A high-level programming language", "B) A low-level programming language", "C) A markup language"],
+    ["A) It requires explicit declaration of variables", "B) It is dynamically typed", "C) It is statically typed"],
+    ["A) List", "B) Tuple", "C) Set"],
+    ["A) P", "B) yth", "C) ytho"],
+    ["A) python", "B) PYTHON", "C) PyThOn"],
+    ["A) Terminates the program", "B) Skips execution to the next statement", "C) Does nothing"],
+    ["A) my_var", "B) 123var", "C) _var"],
+    ["A) 3.33", "B) 3", "C) 3.0"],
+    ["A) /*", "B) #", "C) \"\"\""],
+    ["A) 2", "B) 3", "C) -1"],
+    ["A) Breaks out of the loop", "B) Skips the current iteration and proceeds to the next", "C) Halts the program execution"],
+    ["A) True", "B) False", "C) None"],
+    ["A) {1: 'one', 2: 'two'}", "B) [1: 'one', 2: 'two']", "C) (1: 'one', 2: 'two')"],
+    ["A) python", "B) Python", "C) PYTHON"],
+    ["A) list()", "B) strtolist()", "C) convert()"],
+    ["A) Exponentiation", "B) Modulo division", "C) Floor division"],
+    ["A) concat()", "B) merge()", "C) extend()"]
 ]
 
 # Answers
-answers = [1, 2, 1, 0, 0, 1, 2, 0, 1, 0, 1, 1, 0, 1, 1, 2, 1, 2, 1, 1]
+answers = [1, 2, 1, 0, 0, 1, 2, 0, 1, 0, 1, 1, 0, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 2]
           
