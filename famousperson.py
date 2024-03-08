@@ -13,16 +13,16 @@ famous_questions = [
 
 # Keuzes
 famous_choices = [
-    ["a) MySpace", "b) Facebook", "c) Twitter", "d) LinkedIn"],
-    ["a) 2002", "b) 2004", "c) 2006", "d) 2008"],
-    ["a) Harvard University", "b) Stanford University", "c) Massachusetts Institute of Technology (MIT)", "d) Yale University"],
-    ["a) 18", "b) 20", "c) 22", "d) 24"],
-    ["a) $50 billion", "b) $100 billion", "c) $200 billion", "d) $500 billion"],
-    ["a) William Gates III", "b) Billy Gates", "c) William Henry Gates II", "d) Billie Gates"],
-    ["a) 1975", "b) 1980", "c) 1985", "d) 1990"],
-    ["a) Nobel Peace Prize", "b) Pulitzer Prize", "c) Presidential Medal of Freedom", "d) Legion of Honour"],
-    ["a) Gates Foundation", "b) Hope Foundation", "c) Gates & Melinda Foundation", "d) Bill & Melinda Gates Foundation"],
-    ["a) $50 billion", "b) $100 billion", "c) $150 billion", "d) $200 billion"]
+    ["A) MySpace", "B) Facebook", "C) Twitter", "d) LinkedIn"],
+    ["A) 2002", "B) 2004", "C) 2006", "d) 2008"],
+    ["A) Harvard University", "B) Stanford University", "C) Massachusetts Institute of Technology (MIT)", "d) Yale University"],
+    ["A) 18", "B) 20", "C) 22", "d) 24"],
+    ["A) $50 billion", "B) $100 billion", "C) $200 billion", "d) $500 billion"],
+    ["A) William Gates III", "B) Billy Gates", "C) William Henry Gates II", "d) Billie Gates"],
+    ["A) 1975", "B) 1980", "C) 1985", "d) 1990"],
+    ["A) Nobel Peace Prize", "B) Pulitzer Prize", "C) Presidential Medal of Freedom", "d) Legion of Honour"],
+    ["A) Gates Foundation", "B) Hope Foundation", "C) Gates & Melinda Foundation", "d) Bill & Melinda Gates Foundation"],
+    ["A) $50 billion", "B) $100 billion", "C) $150 billion", "d) $200 billion"]
 ]
 
 # Antwoorden
