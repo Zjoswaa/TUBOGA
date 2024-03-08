@@ -5,6 +5,10 @@ from player import Player
 from questions import *
 from famousperson import *
 
+print(len(questions))
+print(len(choices))
+print(len(answers))
+
 
 class Game:
     def __init__(self, width, height, title):
@@ -554,7 +558,9 @@ class Game:
                 if self.p1.money == 0:
                     self.add_to_log(f"P1 is starving, but has no money", self.color_purple)
                 else:
-                    self.add_to_log(f"P1 is hungry, {random.choice(food)} costs {gain}", self.color_purple)
+                    if abs(gain) > self.p1.money:
+                        gain = -1 * self.p1.money
+                    self.add_to_log(f"P1 is hungry, {random.choice(food)} costs {abs(gain)}", self.color_purple)
             elif item == 7:
                 if self.p1.money == 0:
                     self.add_to_log(f"P1 can't pay the ticket, to jail!", self.color_purple)
@@ -568,12 +574,16 @@ class Game:
                 if self.p1.money == 0:
                     self.add_to_log(f"P1 went all in with nothing", self.color_purple)
                 else:
+                    if abs(gain) > self.p1.money:
+                        gain = -1 * self.p1.money
                     self.add_to_log(f"P1 went all in, -{abs(gain)}", self.color_purple)
             elif item == 9:
                 if self.p1.money == 0:
                     self.add_to_log(f"P1 has no money for {random.choice(relatives)}'s hospital bill", self.color_purple)
                 else:
-                    self.add_to_log(f"P1's {random.choice(relatives)}, is in the hospital, -{abs(gain)}", self.color_purple)
+                    if abs(gain) > self.p1.money:
+                        gain = -1 * self.p1.money
+                    self.add_to_log(f"P1's {random.choice(relatives)} is in the hospital, -{abs(gain)}", self.color_purple)
         else:
             if item == 0:
                 self.add_to_log(f"P2 won the lottery, +{gain}", self.color_purple)
@@ -591,7 +601,9 @@ class Game:
                 if self.p2.money == 0:
                     self.add_to_log(f"P2 is starving, but has no money", self.color_purple)
                 else:
-                    self.add_to_log(f"P2 is hungry, {random.choice(food)} costs {gain}", self.color_purple)
+                    if abs(gain) > self.p2.money:
+                        gain = -1 * self.p2.money
+                    self.add_to_log(f"P2 is hungry, {random.choice(food)} costs {abs(gain)}", self.color_purple)
             elif item == 7:
                 if self.p2.money == 0:
                     self.add_to_log(f"P2 can't pay the ticket, to jail!", self.color_purple)
@@ -605,12 +617,16 @@ class Game:
                 if self.p2.money == 0:
                     self.add_to_log(f"P2 went all in with nothing", self.color_purple)
                 else:
+                    if abs(gain) > self.p2.money:
+                        gain = -1 * self.p2.money
                     self.add_to_log(f"P2 went all in, -{abs(gain)}", self.color_purple)
             elif item == 9:
                 if self.p2.money == 0:
                     self.add_to_log(f"P2 has no money for {random.choice(relatives)}'s hospital bill", self.color_purple)
                 else:
-                    self.add_to_log(f"P2's {random.choice(relatives)}, is in the hospital, -{abs(gain)}", self.color_purple)
+                    if abs(gain) > self.p2.money:
+                        gain = -1 * self.p2.money
+                    self.add_to_log(f"P2's {random.choice(relatives)} is in the hospital, -{abs(gain)}", self.color_purple)
         if player == 1:
             if item != 5:
                 if self.p1.money + gain < 0:

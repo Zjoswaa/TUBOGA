@@ -10,7 +10,6 @@ questions = [
     "What does HTML stand for?",
     "What is the purpose of a 'for' loop in Python?",
     "Which of the following is a data type in Python?",
-    "Which programming paradigm does Python primarily follow?",
     "What symbol is used for exponentiation in Python?",
     "Which function is used to read input from the user in Python?",
     "Which of the following is NOT a valid Python variable name?",
@@ -51,7 +50,6 @@ choices = [
     ["A) HyperText Markup Language", "B) HighTech Multimedia Language", "C) Hyperlink and Text Management Language"],
     ["A) Repeating a block of code until a condition is met", "B) Repeating a block of code a fixed number of times", "C) Making decisions based on conditions"],
     ["A) String", "B) Function", "C) Variable"],
-    ["A) Procedural", "B) Object-Oriented", "C) Functional"],
     ["A) ^", "B) **", "C) %"],
     ["A) input()", "B) read()", "C) get_input()"],
     ["A) my_variable", "B) 2variable", "C) variable_2"],
@@ -81,5 +79,5 @@ choices = [
 ]
 
 # Answers
-answers = [1, 2, 1, 0, 0, 1, 2, 0, 1, 0, 1, 1, 0, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 2]
+answers = [1, 2, 1, 0, 0, 1, 2, 0, 1, 0, 1, 0, 1, 1, 2, 1, 2, 1, 1, 0, 1, 1, 1, 1, 2, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 2]
           
