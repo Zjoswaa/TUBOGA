@@ -279,7 +279,7 @@ class Game:
                                     self.p1.position += 1
                             else:
                                 self.dice_roll()
-                                self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}", self.p1_color)
+                                # self.add_to_log(f"P1 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}", self.p1_color)
                             self.next_round_stage()
                         elif self.round_stages[self.current_round_stage] == "P2_WAIT_FOR_ROLL":
                             self.p2.has_done_query_this_turn = False
@@ -299,7 +299,7 @@ class Game:
                                     self.p2.position += 1
                             else:
                                 self.dice_roll()
-                                self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}", self.p2_color)
+                                # self.add_to_log(f"P2 Roll: {self.dice_rolls[0] + self.dice_rolls[1]}", self.p2_color)
                             self.next_round_stage()
                         break
                     elif event.key == pg.K_s and not self.winner:
@@ -1865,6 +1865,10 @@ class Game:
         self.add_to_log(f"This is the log, the most recent {self.max_log_size} events are shown here.", "White")
         self.p1.position = 0
         self.p2.position = 0
+        self.dice_rolls[0] = 0
+        self.dice_rolls[1] = 0
+        self.d1_text = self.font_200.render(str(self.dice_rolls[0]), False, "Black").convert()
+        self.d2_text = self.font_200.render(str(self.dice_rolls[1]), False, "Black").convert()
         self.p1.money = 500
         self.p2.money = 500
         self.p1_money_text = self.font_40.render(f"${self.p1.money}", False, self.p1_color).convert()
