@@ -1132,7 +1132,7 @@ class Game:
         return_button = pg.Rect((1000, 590), (250, 100))
 
         instruction_text = [self.font_40.render("Input 4 numbers between 1 and 6 and hit enter, the numbers that are in the correct spot and numbers", False, "Black").convert(),
-                            self.font_40.render("that are in the answer but not in the correct spot are shown.", False, "Black").convert()]
+                            self.font_40.render("that are in the answer are shown.", False, "Black").convert()]
         note_text = self.font_24.render("Note: the answer contains no duplicate numbers. (eg. 2112 does not occur)", False, self.color_red).convert()
 
         while self.state_stack[-1] == "EVENT":
