@@ -669,7 +669,7 @@ class Game:
                        pg.Rect((420, 510), (100, 50)), pg.Rect((420, 580), (100, 50)), pg.Rect((420, 650), (100, 50))]
         sell_buttons = [pg.Rect((550, 90), (100, 50)), pg.Rect((550, 160), (100, 50)), pg.Rect((550, 230), (100, 50)), pg.Rect((550, 300), (100, 50)), pg.Rect((550, 370), (100, 50)), pg.Rect((550, 440), (100, 50)),
                         pg.Rect((550, 510), (100, 50)), pg.Rect((550, 580), (100, 50)), pg.Rect((550, 650), (100, 50))]
-        items = {"Keyboard": 100, "Mouse": 100, "Monitor": 100, "Printer": 100, "CPU": 100, "GPU": 100, "Motherboard": 100, "Mini Tower": 100, "Harddrive": 100}
+        items = {"Keyboard": 80, "Mouse": 80, "Monitor": 300, "Printer": 200, "CPU": 350, "GPU": 500, "Motherboard": 150, "Mini Tower": 75, "Harddrive": 100}
         keys = list(items.keys())
         values = list(items.values())
 
