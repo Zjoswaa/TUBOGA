@@ -87,7 +87,7 @@ class Game:
         self.event_reward = (250, 750)
         self.famous_reward = (100, 250)
 
-        self.computer_price = 1000
+        self.computer_price = 2000
 
         self.back_at_start_reward = (50, 100)
 
